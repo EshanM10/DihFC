@@ -1,0 +1,6 @@
+{
+  "name": "Pixel Kick FC — Retro Arcade Football & Pack Simulator",
+  "description": "Retro 16-bit arcade football club builder with 8-tier holographic packs, walkout ceremonies, 0-33 chemistry squad builder, SBCs, live 2D pitch engine, and Firebase multiplayer.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
