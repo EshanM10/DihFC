@@ -24,13 +24,63 @@ export interface PlayerCard {
   stats: {
     pac: number;
     sho: number;
+    fin?: number;
     pas: number;
+    vis?: number;
     dri: number;
     def: number;
     phy: number;
   };
   shirtNum: number;
   isOutOfPositionSpecial?: boolean;
+}
+
+export interface SubTierInfo {
+  id: string;
+  label: string;
+  shortLabel: string;
+  cssClass: string;
+  rank: number;
+}
+
+export function getCardSubTier(card: Pick<PlayerCard, 'tier' | 'ovr'>): SubTierInfo {
+  const ovr = Number(card.ovr) || 60;
+  switch (card.tier) {
+    case 'bronze':
+      return ovr >= 57
+        ? { id: 'bronze-rare', label: 'RARE BRONZE', shortLabel: 'RARE BRONZE', cssClass: 'subtier-rare', rank: 2 }
+        : { id: 'bronze-common', label: 'COMMON BRONZE', shortLabel: 'BRONZE', cssClass: 'subtier-common', rank: 1 };
+    case 'silver':
+      return ovr >= 70
+        ? { id: 'silver-rare', label: 'RARE SILVER', shortLabel: 'RARE SILVER', cssClass: 'subtier-rare', rank: 2 }
+        : { id: 'silver-common', label: 'COMMON SILVER', shortLabel: 'SILVER', cssClass: 'subtier-common', rank: 1 };
+    case 'gold':
+      if (ovr >= 82) return { id: 'gold-walkout', label: 'GOLD WALKOUT', shortLabel: 'GOLD STAR', cssClass: 'subtier-walkout', rank: 3 };
+      if (ovr >= 79) return { id: 'gold-rare', label: 'RARE GOLD', shortLabel: 'RARE GOLD', cssClass: 'subtier-rare', rank: 2 };
+      return { id: 'gold-common', label: 'NON-RARE GOLD', shortLabel: 'GOLD', cssClass: 'subtier-common', rank: 1 };
+    case 'elite':
+      if (ovr >= 88) return { id: 'elite-galactico', label: 'GALACTICO', shortLabel: 'GALACTICO', cssClass: 'subtier-galactico', rank: 3 };
+      if (ovr >= 86) return { id: 'elite-worldclass', label: 'WORLD CLASS', shortLabel: 'WORLD CLASS', cssClass: 'subtier-worldclass', rank: 2 };
+      return { id: 'elite-star', label: 'ELITE STAR', shortLabel: 'ELITE', cssClass: 'subtier-rare', rank: 1 };
+    case 'totw':
+      if (ovr >= 89) return { id: 'totw-superstar', label: 'TOTW SUPERSTAR', shortLabel: 'IF SUPER', cssClass: 'subtier-superstar', rank: 3 };
+      if (ovr >= 86) return { id: 'totw-master', label: 'TOTW MASTER', shortLabel: 'IF MASTER', cssClass: 'subtier-master', rank: 2 };
+      return { id: 'totw-inform', label: 'TOTW IN-FORM', shortLabel: 'IN-FORM', cssClass: 'subtier-rare', rank: 1 };
+    case 'hero':
+      return ovr >= 88
+        ? { id: 'hero-prime', label: 'PRIME HERO', shortLabel: 'PRIME HERO', cssClass: 'subtier-prime', rank: 2 }
+        : { id: 'hero-cult', label: 'CULT HERO', shortLabel: 'CULT HERO', cssClass: 'subtier-rare', rank: 1 };
+    case 'icon':
+      if (ovr >= 92) return { id: 'icon-immortal', label: 'IMMORTAL ICON', shortLabel: 'IMMORTAL', cssClass: 'subtier-immortal', rank: 3 };
+      if (ovr >= 89) return { id: 'icon-prime', label: 'PRIME ICON', shortLabel: 'PRIME ICON', cssClass: 'subtier-prime', rank: 2 };
+      return { id: 'icon-base', label: 'BASE ICON', shortLabel: 'BASE ICON', cssClass: 'subtier-rare', rank: 1 };
+    case 'shapeshifter':
+      return ovr >= 91
+        ? { id: 'ss-apex', label: 'APEX SHIFTER', shortLabel: 'APEX SS', cssClass: 'subtier-apex', rank: 2 }
+        : { id: 'ss-glitch', label: 'GLITCH SHIFTER', shortLabel: 'GLITCH SS', cssClass: 'subtier-rare', rank: 1 };
+    default:
+      return { id: 'standard', label: 'STANDARD', shortLabel: 'CARD', cssClass: 'subtier-common', rank: 1 };
+  }
 }
 
 export type MentalityId =
@@ -167,8 +217,10 @@ export const TACTIC_PRESETS: Record<Exclude<MentalityId, 'CUSTOM'>, { label: str
 
 export function getPlayerTraits(card: PlayerCard): string[] {
   const traits: string[] = [];
+  const fin = card.stats.fin ?? card.stats.sho;
+  const vis = card.stats.vis ?? card.stats.pas;
   if (card.pos === 'GK') {
-    if (card.stats.pac >= 65 || card.stats.pas >= 78) traits.push('Sweeper Keeper');
+    if (card.stats.pac >= 65 || vis >= 80 || card.stats.pas >= 78) traits.push('Sweeper Keeper');
     else traits.push('Shot Stopper');
     return traits;
   }
@@ -178,10 +230,10 @@ export function getPlayerTraits(card: PlayerCard): string[] {
   if ((card.pos === 'LW' || card.pos === 'RW' || card.pos === 'LM' || card.pos === 'RM' || card.pos === 'LB' || card.pos === 'RB') && card.stats.pas >= 72) {
     traits.push('Whipped Crosser');
   }
-  if ((card.pos === 'CAM' || card.pos === 'CM') && card.stats.pas >= 78) {
+  if ((card.pos === 'CAM' || card.pos === 'CM') && (vis >= 82 || card.stats.pas >= 78)) {
     traits.push('Playmaker');
   }
-  if (card.pos === 'ST' && card.stats.sho >= 78) {
+  if (card.pos === 'ST' && fin >= 78) {
     traits.push(card.stats.phy >= 80 ? 'Target Finisher' : 'Clinical Poacher');
   } else if (card.stats.sho >= 82) {
     traits.push('Long Shot');
@@ -547,9 +599,12 @@ export interface PitchDot {
   homeY: number;
   kickoffX?: number;
   kickoffY?: number;
+  ovr?: number;
   pac: number;
   sho: number;
+  fin?: number;
   pas: number;
+  vis?: number;
   dri: number;
   def: number;
   phy?: number;
@@ -663,49 +718,59 @@ export function stepMatchPhysics(state: SimMatchState, dt: number, rng: () => nu
     }
   }
 
+  // Nonlinear stat normalizer: OVR & stats create a clear real-football skill gap
+  const statNorm = (val: number) => Math.pow(Math.max(0, Math.min(1, (val - 35) / 64)), 1.45);
+  const dotOvr = (d: PitchDot) => d.ovr ?? Math.round((d.pac + d.sho + d.pas + d.dri + d.def + (d.phy ?? 70)) / 6);
+
   // Check GK swept saves before goal line check so rockets cannot tunnel through keepers
   if (!ball.ownerId && ball.kickCooldown <= 0 && ball.z < 52) {
     for (const gk of dots) {
       if (gk.redCarded || gk.role !== 'GK') continue;
-      const gkReach = 22 + (gk.def / 100) * 14;
+      const gkDefN = statNorm(gk.def);
+      const gkOvrN = statNorm(dotOvr(gk));
+      const gkReach = 14 + gkDefN * 20 + gkOvrN * 6;
       const segDist = distPointToSeg(gk.x, gk.y, prevX, prevY, ball.x, ball.y);
       if (segDist < gkReach) {
         const isShot = Boolean(state.shotInFlight && state.shotInFlight.team !== gk.team);
         const speed = Math.hypot(ball.vx, ball.vy);
         if (isShot || speed > 220) {
-          const catchChance = 0.52 + (gk.def / 100) * 0.25 - Math.min(0.25, speed / 2600);
-          if (rng() < catchChance) {
-            ball.ownerId = gk.id;
-            ball.lastTouchTeam = gk.team;
-            ball.x = gk.x;
-            ball.y = gk.y;
-            ball.vx = 0;
-            ball.vy = 0;
-            ball.vz = 0;
-            ball.z = 0;
-            ball.kickCooldown = 0.22;
-            state.gkHoldTimer = 0.45;
-            state.shotInFlight = null;
-            state.passTargetId = null;
-            events.push(`SAVE_${gk.team.toUpperCase()}`);
-          } else {
-            // Parry wide away from goal mouth
-            const clearDir = gk.team === 'home' ? 1 : -1;
-            const sideSign = ball.y >= pitchH / 2 ? 1 : -1;
-            ball.ownerId = null;
-            ball.lastTouchTeam = gk.team;
-            ball.x = gk.x + clearDir * 10;
-            ball.vx = clearDir * (170 + rng() * 110);
-            ball.vy = sideSign * (210 + rng() * 140);
-            ball.vz = 65;
-            ball.kickCooldown = 0.28;
-            gk.diveTimer = 0.36;
-            gk.diveVy = (ball.y - gk.y) * 2.2;
-            state.shotInFlight = null;
-            state.passTargetId = null;
-            events.push(`SAVE_${gk.team.toUpperCase()}`);
+          const shotPowerPenalty = Math.min(0.32, Math.max(0, (speed - 360) / 1400));
+          const saveChance = Math.max(0.18, Math.min(0.84, 0.24 + gkDefN * 0.46 + gkOvrN * 0.14 - shotPowerPenalty));
+          if (rng() < saveChance) {
+            const catchChance = 0.42 + gkDefN * 0.35 - shotPowerPenalty * 0.5;
+            if (rng() < catchChance) {
+              ball.ownerId = gk.id;
+              ball.lastTouchTeam = gk.team;
+              ball.x = gk.x;
+              ball.y = gk.y;
+              ball.vx = 0;
+              ball.vy = 0;
+              ball.vz = 0;
+              ball.z = 0;
+              ball.kickCooldown = 0.22;
+              state.gkHoldTimer = 0.45;
+              state.shotInFlight = null;
+              state.passTargetId = null;
+              events.push(`SAVE_${gk.team.toUpperCase()}`);
+            } else {
+              // Parry wide away from goal mouth
+              const clearDir = gk.team === 'home' ? 1 : -1;
+              const sideSign = ball.y >= pitchH / 2 ? 1 : -1;
+              ball.ownerId = null;
+              ball.lastTouchTeam = gk.team;
+              ball.x = gk.x + clearDir * 10;
+              ball.vx = clearDir * (170 + rng() * 110);
+              ball.vy = sideSign * (210 + rng() * 140);
+              ball.vz = 65;
+              ball.kickCooldown = 0.28;
+              gk.diveTimer = 0.36;
+              gk.diveVy = (ball.y - gk.y) * 2.2;
+              state.shotInFlight = null;
+              state.passTargetId = null;
+              events.push(`SAVE_${gk.team.toUpperCase()}`);
+            }
+            break;
           }
-          break;
         }
       }
     }
@@ -907,7 +972,18 @@ export function stepMatchPhysics(state: SimMatchState, dt: number, rng: () => nu
 
     const tac = dot.team === 'home' ? homeTac : awayTac;
     const isOwner = ball.ownerId === dot.id;
-    const speedBase = (86 + dot.pac * 1.12) * (dot === nearestHome || dot === nearestAway ? 0.96 + (tac.aggressiveness / 100) * 0.14 : 1);
+    const ovrN = statNorm(dotOvr(dot));
+    const pacN = statNorm(dot.pac);
+    const driN = statNorm(dot.dri);
+    const defN = statNorm(dot.def);
+    const phyN = statNorm(dot.phy ?? 70);
+    const shoN = statNorm(dot.sho);
+    const finN = statNorm(dot.fin ?? dot.sho);
+    const pasN = statNorm(dot.pas);
+    const visN = statNorm(dot.vis ?? dot.pas);
+
+    const pressBoost = dot === nearestHome || dot === nearestAway ? 0.94 + (tac.aggressiveness / 100) * 0.16 + ovrN * 0.06 : 1;
+    const speedBase = (78 + pacN * 144 + ovrN * 16) * pressBoost;
     const pos = dot.pos || dot.role;
     const traits = dot.traits || [];
     let targetX = dot.homeX;
@@ -915,7 +991,7 @@ export function stepMatchPhysics(state: SimMatchState, dt: number, rng: () => nu
 
     if (dot.role === 'GK') {
       const baseX = dot.team === 'home' ? padX + 20 : pitchW - padX - 20;
-      const sweeperRange = traits.includes('Sweeper Keeper') ? 32 : 16;
+      const sweeperRange = traits.includes('Sweeper Keeper') ? 34 : 16;
       const stepOut = dot.team === 'home'
         ? (ball.x < pitchW * 0.25 ? sweeperRange : 0)
         : (ball.x > pitchW * 0.75 ? -sweeperRange : 0);
@@ -934,10 +1010,10 @@ export function stepMatchPhysics(state: SimMatchState, dt: number, rng: () => nu
         if (opp.team === dot.team || opp.redCarded) continue;
         const od = Math.hypot(dot.x - opp.x, dot.y - opp.y);
         if (od < 76 && od > 1) {
-          const evadeBoost = (0.75 + (dot.dri / 100) * 0.65) * (0.7 + (tac.dribbleTendency / 100) * 0.65);
+          const evadeBoost = (0.55 + driN * 0.85 + ovrN * 0.25) * (0.7 + (tac.dribbleTendency / 100) * 0.65);
           repelX += ((dot.x - opp.x) / od) * ((76 - od) / 76) * 78 * evadeBoost;
           repelY += ((dot.y - opp.y) / od) * ((76 - od) / 76) * 105 * evadeBoost;
-          if (od < 34 && (dot.dribbleCD || 0) <= 0 && rng() < (0.04 + (dot.dri / 100) * 0.05) * (0.6 + tac.dribbleTendency / 100)) {
+          if (od < 34 && (dot.dribbleCD || 0) <= 0 && rng() < (0.02 + driN * 0.09) * (0.6 + tac.dribbleTendency / 100)) {
             evaded = true;
           }
         }
@@ -950,7 +1026,7 @@ export function stepMatchPhysics(state: SimMatchState, dt: number, rng: () => nu
       }
 
       // Wingers drive wide before cutting in or crossing; strikers drive directly at box
-      const preferFlank = isWideRole && distGoal > pitchW * 0.17 && tac.crossIntensity >= 45;
+      const preferFlank = isWideRole && distGoal > pitchW * 0.12 && tac.crossIntensity >= 45;
       const desiredY = preferFlank
         ? (dot.y < pitchH * 0.5 ? padY + 62 : pitchH - padY - 62)
         : pitchH * 0.5;
@@ -1027,7 +1103,7 @@ export function stepMatchPhysics(state: SimMatchState, dt: number, rng: () => nu
     const dist = Math.hypot(dx, dy);
 
     if (dist > 3) {
-      const turnRate = 0.1 + (dot.dri / 100) * 0.14;
+      const turnRate = 0.08 + driN * 0.16 + ovrN * 0.05;
       const desiredVx = (dx / dist) * speedBase;
       const desiredVy = (dy / dist) * speedBase;
       dot.vx += (desiredVx - dot.vx) * turnRate;
@@ -1040,7 +1116,7 @@ export function stepMatchPhysics(state: SimMatchState, dt: number, rng: () => nu
     if (dot.role !== 'GK' && ball.kickCooldown <= 0 && ball.z < 26) {
       const segDist = distPointToSeg(dot.x, dot.y, prevX, prevY, ball.x, ball.y);
       const aggFactor = tac.aggressiveness / 100;
-      const reach = 11.5 + (dot.def > 78 ? 2.5 : 0) + aggFactor * 2.5;
+      const reach = 9.5 + defN * 4.5 + ovrN * 2.5 + aggFactor * 2.2;
       if (segDist < reach) {
         if (state.shotInFlight && state.shotInFlight.team !== dot.team && !ball.ownerId) {
           ball.vx = (dot.team === 'home' ? 1 : -1) * (110 + rng() * 90);
@@ -1052,8 +1128,15 @@ export function stepMatchPhysics(state: SimMatchState, dt: number, rng: () => nu
           events.push(`BLOCK_${dot.team.toUpperCase()}`);
           continue;
         }
-        const tackleOdds = 0.16 + (dot.def / 100) * 0.34 + aggFactor * 0.22 - (ownerDot ? (ownerDot.dri / 100) * 0.14 : 0);
-        if (!ball.ownerId || (ball.lastTouchTeam !== dot.team && rng() < tackleOdds)) {
+        const ownerDriN = ownerDot ? statNorm(ownerDot.dri) : 0;
+        const ownerPhyN = ownerDot ? statNorm(ownerDot.phy ?? 70) : 0;
+        const ownerOvrN = ownerDot ? statNorm(dotOvr(ownerDot)) : 0;
+        const tackleOdds = Math.max(
+          0.05,
+          Math.min(0.75, 0.12 + defN * 0.42 + phyN * 0.18 + ovrN * 0.16 + aggFactor * 0.16 - ownerDriN * 0.28 - ownerPhyN * 0.12 - ownerOvrN * 0.14)
+        );
+        const looseControlOdds = ball.ownerId ? tackleOdds : Math.min(0.98, 0.45 + ovrN * 0.45 + driN * 0.15);
+        if ((!ball.ownerId && rng() < looseControlOdds) || (ball.ownerId && ball.lastTouchTeam !== dot.team && rng() < tackleOdds)) {
           if (ball.ownerId && ball.lastTouchTeam !== dot.team) {
             if (dot.team === 'home') state.homeTackles = (state.homeTackles || 0) + 1;
             else state.awayTackles = (state.awayTackles || 0) + 1;
@@ -1139,18 +1222,18 @@ export function stepMatchPhysics(state: SimMatchState, dt: number, rng: () => nu
       const goalX = dot.team === 'home' ? pitchW - padX : padX;
       const distToGoal = Math.hypot(goalX - dot.x, pitchH * 0.5 - dot.y);
       const shootScale = 0.5 + (tac.shootIntensity / 100) * 1.1;
-      const maxShotRange = pitchW * (0.17 + (tac.shootIntensity / 100) * 0.11 + (traits.includes('Long Shot') ? 0.04 : 0));
+      const maxShotRange = pitchW * (0.14 + shoN * 0.09 + (tac.shootIntensity / 100) * 0.08 + (traits.includes('Long Shot') ? 0.04 : 0));
       const goodAngle = Math.abs(dot.y - pitchH * 0.5) < pitchH * 0.28;
-      const roleShootBoost = dot.role === 'FWD' ? 1.35 : dot.role === 'DEF' ? 0.45 : 0.9;
-      const shotProb = (distToGoal < pitchW * 0.13 ? 0.14 : 0.032 + (dot.sho / 100) * 0.048) * shootScale * roleShootBoost;
+      const roleShootBoost = dot.role === 'FWD' ? 1.38 : dot.role === 'DEF' ? 0.42 : 0.9;
+      const shotProb = (distToGoal < pitchW * 0.13 ? (0.08 + finN * 0.14 + ovrN * 0.05) : (0.016 + shoN * 0.055 + finN * 0.035)) * shootScale * roleShootBoost;
 
       if ((state.carryTime || 0) > 0.18 && distToGoal < maxShotRange && goodAngle && rng() < shotProb) {
-        const spread = ((105 - dot.sho) / 100) * (pitchH * 0.13) + (nearestOppDist < 34 ? pitchH * 0.04 : 0);
+        const spread = (1 - finN) * (pitchH * 0.175) + (1 - ovrN) * (pitchH * 0.045) + (nearestOppDist < 34 ? pitchH * 0.045 : 0);
         const aimY = pitchH * 0.5 + (rng() - 0.5) * (goalBot - goalTop + spread * 2);
         const sdx = goalX - dot.x;
         const sdy = aimY - dot.y;
         const sLen = Math.hypot(sdx, sdy) || 1;
-        const shotSpeed = 425 + dot.sho * 2.1;
+        const shotSpeed = 365 + shoN * 290 + ovrN * 45;
         ball.ownerId = null;
         ball.vx = (sdx / sLen) * shotSpeed;
         ball.vy = (sdy / sLen) * shotSpeed;
@@ -1166,11 +1249,11 @@ export function stepMatchPhysics(state: SimMatchState, dt: number, rng: () => nu
 
       // Crossing mechanic: wide players in attacking channels whip lofted crosses into the box
       const attackDir = dot.team === 'home' ? 1 : -1;
-      const inAttackingThird = dot.team === 'home' ? dot.x > pitchW * 0.62 : dot.x < pitchW * 0.38;
-      const inWideChannel = dot.y < pitchH * 0.38 || dot.y > pitchH * 0.62;
+      const inAttackingThird = dot.team === 'home' ? dot.x > pitchW * 0.58 : dot.x < pitchW * 0.42;
+      const inWideChannel = dot.y < pitchH * 0.39 || dot.y > pitchH * 0.61;
       const isCrosserPos = pos === 'LW' || pos === 'RW' || pos === 'LM' || pos === 'RM' || pos === 'LB' || pos === 'RB';
       const crossTraitBoost = traits.includes('Whipped Crosser') ? 1.45 : 1.0;
-      const crossChance = (tac.crossIntensity / 100) * 0.14 * crossTraitBoost * (isCrosserPos ? 1.35 : 0.75);
+      const crossChance = (tac.crossIntensity / 100) * (0.14 + pasN * 0.10 + visN * 0.05) * crossTraitBoost * (isCrosserPos ? 1.45 : 0.75);
 
       if ((state.carryTime || 0) > 0.2 && inAttackingThird && inWideChannel && rng() < crossChance) {
         const boxTargets = dots.filter(
@@ -1178,12 +1261,13 @@ export function stepMatchPhysics(state: SimMatchState, dt: number, rng: () => nu
         );
         if (boxTargets.length > 0) {
           const target = boxTargets.find((m) => m.pos === 'ST') || boxTargets[0];
+          const crossErr = (1 - pasN) * 75;
           const targetBoxX = dot.team === 'home' ? Math.max(target.x, pitchW - padX - 155) : Math.min(target.x, padX + 155);
-          const targetBoxY = pitchH * 0.5 + (rng() - 0.5) * 110;
+          const targetBoxY = pitchH * 0.5 + (rng() - 0.5) * (60 + crossErr);
           const cdx = targetBoxX - dot.x;
           const cdy = targetBoxY - dot.y;
           const cLen = Math.hypot(cdx, cdy) || 1;
-          const crossSpeed = Math.min(470, 290 + cLen * 0.55);
+          const crossSpeed = Math.min(480, 275 + pasN * 75 + cLen * 0.52);
           ball.ownerId = null;
           ball.vx = (cdx / cLen) * crossSpeed;
           ball.vy = (cdy / cLen) * crossSpeed;
@@ -1204,15 +1288,15 @@ export function stepMatchPhysics(state: SimMatchState, dt: number, rng: () => nu
 
       // Realistic Dribble vs Pass decision: hold & dribble longer before passing!
       const underPressure = nearestOppDist < 42;
-      const minCarryForDribble = 0.42 + (tac.dribbleTendency / 100) * 0.55 - (tac.passIntensity / 100) * 0.28 + (traits.includes('Speed Dribbler') ? 0.16 : 0);
+      const minCarryForDribble = 0.44 + (tac.dribbleTendency / 100) * 0.56 - (tac.passIntensity / 100) * 0.34 + (traits.includes('Speed Dribbler') ? 0.16 : 0);
       if ((state.carryTime || 0) < minCarryForDribble && !underPressure) {
         continue;
       }
 
-      const rolePassBias = dot.role === 'DEF' ? 1.25 : pos === 'CM' || pos === 'CAM' ? 1.15 : pos === 'ST' ? 0.65 : 0.9;
-      const passTacScale = 0.28 + (tac.passIntensity / 100) * 1.15 - (tac.dribbleTendency / 100) * 0.35;
-      const basePassProb = ((state.carryTime || 0) > 0.7 ? 0.024 : 0.008) + (dot.pas / 100) * 0.018 + (underPressure ? 0.055 : 0);
-      const passChance = Math.max(0.004, basePassProb * Math.max(0.2, passTacScale) * rolePassBias);
+      const rolePassBias = dot.role === 'DEF' ? 1.2 : pos === 'CM' || pos === 'CAM' ? 1.2 : pos === 'ST' ? 0.65 : 0.92;
+      const passTacScale = Math.max(0.16, 0.16 + Math.pow(tac.passIntensity / 100, 1.3) * 1.48 - (tac.dribbleTendency / 100) * 0.32);
+      const basePassProb = ((state.carryTime || 0) > 0.65 ? 0.026 : 0.011) + pasN * 0.024 + visN * 0.014 + (underPressure ? 0.042 : 0);
+      const passChance = Math.max(0.004, basePassProb * passTacScale * rolePassBias);
 
       if (rng() < passChance) {
         const mates = dots.filter((m) => m.team === dot.team && m.id !== dot.id && !m.redCarded && m.role !== 'GK');
@@ -1232,19 +1316,22 @@ export function stepMatchPhysics(state: SimMatchState, dt: number, rng: () => nu
               const dRec = Math.hypot(opp.x - m.x, opp.y - m.y);
               if (dRec < minRecOpp) minRecOpp = dRec;
             }
-            let score = progress * 0.55 + Math.min(90, minRecOpp) * 1.1 + (minLaneOpp < 20 ? -160 : minLaneOpp * 0.8);
+            // High Vision spots forward runs & avoids intercepted passing lanes!
+            const visionWeight = 0.4 + visN * 1.15;
+            let score = progress * 0.52 * visionWeight + Math.min(95, minRecOpp) * (0.65 + visN * 0.75) + (minLaneOpp < 22 ? -175 * visionWeight : minLaneOpp * 0.85 * visionWeight);
             if (underPressure && progress < 0) score += 45;
-            if (traits.includes('Playmaker') && progress > 40) score += 35;
+            if ((traits.includes('Playmaker') || visN > 0.7) && progress > 45 && m.role === 'FWD') score += 48;
             if (score > bestScore) {
               bestScore = score;
               bestMate = m;
             }
           }
-          const err = ((100 - dot.pas) / 100) * 28;
-          const pdx = bestMate.x + bestMate.vx * 0.18 + (rng() - 0.5) * err - dot.x;
-          const pdy = bestMate.y + bestMate.vy * 0.18 + (rng() - 0.5) * err - dot.y;
+          const err = (1 - pasN) * 44 + (1 - ovrN) * 18 + (underPressure ? 10 * (1 - pasN) : 0);
+          const leadFactor = 0.08 + visN * 0.16;
+          const pdx = bestMate.x + bestMate.vx * leadFactor + (rng() - 0.5) * err - dot.x;
+          const pdy = bestMate.y + bestMate.vy * leadFactor + (rng() - 0.5) * err - dot.y;
           const pLen = Math.hypot(pdx, pdy) || 1;
-          const passSpeed = Math.min(440, 235 + pLen * 0.78);
+          const passSpeed = Math.min(460, 215 + pasN * 55 + pLen * 0.78);
           ball.ownerId = null;
           ball.vx = (pdx / pLen) * passSpeed;
           ball.vy = (pdy / pLen) * passSpeed;

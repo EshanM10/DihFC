@@ -365,4 +365,123 @@ test('tactics meaningfully drive pass volume and crossing frequency', async () =
   assert.ok((tikiState.homePasses || 0) < 160, `Expected pass count to stay realistic (<160), got ${tikiState.homePasses}`);
 });
 
+test('all 550 players have 8 realistic stats & getCardSubTier classifies all tiers cleanly', async () => {
+  const { readFileSync } = await import('node:fs');
+  const { resolve } = await import('node:path');
+  const { getCardSubTier } = await import('./engine');
+  const players: PlayerCard[] = JSON.parse(readFileSync(resolve(process.cwd(), 'public/players.json'), 'utf8'));
+  const keys = ['pac', 'sho', 'fin', 'pas', 'vis', 'dri', 'def', 'phy'] as const;
+  for (const p of players) {
+    for (const k of keys) {
+      const val = p.stats[k];
+      assert.ok(typeof val === 'number' && val >= 18 && val <= 99, `Invalid stat ${k}=${val} on ${p.name}`);
+    }
+  }
+  assert.equal(getCardSubTier({ tier: 'bronze', ovr: 54 }).label, 'COMMON BRONZE');
+  assert.equal(getCardSubTier({ tier: 'bronze', ovr: 58 }).label, 'RARE BRONZE');
+  assert.equal(getCardSubTier({ tier: 'gold', ovr: 76 }).label, 'NON-RARE GOLD');
+  assert.equal(getCardSubTier({ tier: 'gold', ovr: 80 }).label, 'RARE GOLD');
+  assert.equal(getCardSubTier({ tier: 'gold', ovr: 82 }).label, 'GOLD WALKOUT');
+  assert.equal(getCardSubTier({ tier: 'elite', ovr: 88 }).label, 'GALACTICO');
+  assert.equal(getCardSubTier({ tier: 'icon', ovr: 95 }).label, 'IMMORTAL ICON');
+  assert.equal(getCardSubTier({ tier: 'shapeshifter', ovr: 92 }).label, 'APEX SHIFTER');
+});
+
+test('high-OVR Icon/Elite XI decisively dominates low-OVR Bronze XI across 90-minute matches', async () => {
+  const { readFileSync } = await import('node:fs');
+  const { resolve } = await import('node:path');
+  const { resetKickoff, TACTIC_PRESETS, getPlayerTraits } = await import('./engine');
+  const players: PlayerCard[] = JSON.parse(readFileSync(resolve(process.cwd(), 'public/players.json'), 'utf8'));
+
+  const build11 = (tierSet: string[]) => {
+    const pool = players.filter((p) => tierSet.includes(p.tier));
+    const gk = pool.find((p) => p.pos === 'GK') || pool[0];
+    const out = pool.filter((p) => p.pos !== 'GK');
+    return [gk, ...Array.from({ length: 10 }, (_, idx) => out[idx % out.length])];
+  };
+
+  const elite11 = build11(['icon', 'elite']);
+  const bronze11 = build11(['bronze']);
+
+  const toDots = (cards: PlayerCard[], team: 'home' | 'away'): PitchDot[] => {
+    const slots = FORMATIONS['4-3-3'];
+    return slots.map((s, idx) => {
+      const card = cards[idx];
+      const hx = team === 'home' ? 56 + s.x * 1168 : 1280 - (56 + s.x * 1168);
+      const hy = 48 + (team === 'home' ? s.y : 1 - s.y) * 664;
+      const kx = team === 'home'
+        ? (s.role === 'GK' ? 56 : Math.min(612, 60 + s.x * 560))
+        : (s.role === 'GK' ? 1224 : Math.max(668, 1220 - s.x * 560));
+      return {
+        id: `${team[0]}-${idx}`,
+        team,
+        slotIndex: idx,
+        shirtNum: card.shirtNum || idx + 1,
+        name: card.name,
+        pos: s.pos,
+        role: s.role,
+        traits: getPlayerTraits(card),
+        x: kx,
+        y: hy,
+        vx: 0,
+        vy: 0,
+        homeX: hx,
+        homeY: hy,
+        kickoffX: kx,
+        kickoffY: hy,
+        ovr: card.ovr,
+        pac: card.stats.pac,
+        sho: card.stats.sho,
+        fin: card.stats.fin ?? card.stats.sho,
+        pas: card.stats.pas,
+        vis: card.stats.vis ?? card.stats.pas,
+        dri: card.stats.dri,
+        def: card.stats.def,
+        phy: card.stats.phy,
+        redCarded: false,
+        yellowCards: 0,
+        diveTimer: 0,
+        diveVy: 0,
+      };
+    });
+  };
+
+  let eliteGoalsTotal = 0;
+  let bronzeGoalsTotal = 0;
+  let eliteWins = 0;
+
+  for (const seed of [101, 202, 303, 404, 505]) {
+    const state: SimMatchState = {
+      pitchW: 1280,
+      pitchH: 760,
+      dots: [...toDots(elite11, 'home'), ...toDots(bronze11, 'away')],
+      ball: { x: 640, y: 380, z: 0, vx: 0, vy: 0, vz: 0, ownerId: null, lastTouchTeam: 'home', kickCooldown: 0 },
+      homeScore: 0,
+      awayScore: 0,
+      homeShots: 0,
+      awayShots: 0,
+      homePossessionTicks: 0,
+      awayPossessionTicks: 0,
+      elapsedMinutes: 0,
+      freezeTicks: 0,
+      goalBannerTimer: 0,
+      lastEvent: null,
+      homeTactics: TACTIC_PRESETS.BALANCED.tactics,
+      awayTactics: TACTIC_PRESETS.BALANCED.tactics,
+    };
+    resetKickoff(state, 'home');
+    const rng = createSeededRng(seed);
+    for (let i = 0; i < 60 * 50; i++) {
+      stepMatchPhysics(state, 1 / 60, rng);
+    }
+    eliteGoalsTotal += state.homeScore;
+    bronzeGoalsTotal += state.awayScore;
+    if (state.homeScore > state.awayScore) eliteWins += 1;
+  }
+
+  assert.ok(eliteWins >= 4, `Expected Icon/Elite XI to win >= 4/5 matches vs Bronze XI, won ${eliteWins}/5 (${eliteGoalsTotal}-${bronzeGoalsTotal})`);
+  assert.ok(eliteGoalsTotal > bronzeGoalsTotal * 2.2, `Expected decisive goal margin, got ${eliteGoalsTotal}-${bronzeGoalsTotal}`);
+});
+
+
 
