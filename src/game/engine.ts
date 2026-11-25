@@ -267,6 +267,314 @@ export function getCardShardValue(card: PlayerCard): { buyPrice: number; sellVal
   return { buyPrice, sellValue };
 }
 
+export type PlaystyleTier = 'bronze' | 'silver' | 'gold' | 'purple';
+
+export interface PlaystyleEffects {
+  pacMult?: number;
+  burstMult?: number;
+  shoMult?: number;
+  finMult?: number;
+  longShotFreq?: number;
+  pasMult?: number;
+  lobFreq?: number;
+  crossMult?: number;
+  driMult?: number;
+  defMult?: number;
+  gkMult?: number;
+  pressMult?: number;
+}
+
+export interface PlaystyleDef {
+  id: string;
+  name: string;
+  tier: PlaystyleTier;
+  category: 'ATTACK' | 'MIDFIELD' | 'DEFENSE' | 'SPECIAL';
+  costCoins: number;
+  costShards: number;
+  shortTag: string;
+  desc: string;
+  effects: PlaystyleEffects;
+}
+
+export const PLAYSTYLE_TIER_META: Record<PlaystyleTier, { label: string; color: string; cssClass: string; rank: number }> = {
+  bronze: { label: 'BRONZE', color: '#cd7f32', cssClass: 'ps-tier-bronze', rank: 1 },
+  silver: { label: 'SILVER', color: '#e2e8f0', cssClass: 'ps-tier-silver', rank: 2 },
+  gold: { label: 'GOLD', color: '#ffd600', cssClass: 'ps-tier-gold', rank: 3 },
+  purple: { label: 'MYTHIC PURPLE', color: '#c084fc', cssClass: 'ps-tier-purple', rank: 4 },
+};
+
+export const PLAYSTYLES: PlaystyleDef[] = [
+  // BRONZE (3)
+  {
+    id: 'ps_first_touch',
+    name: 'Soft First Touch',
+    tier: 'bronze',
+    category: 'MIDFIELD',
+    costCoins: 450,
+    costShards: 30,
+    shortTag: 'CTRL+',
+    desc: 'Crisper ball trapping, cleaner close control, and calmer short distribution.',
+    effects: { driMult: 1.12, pasMult: 1.08 },
+  },
+  {
+    id: 'ps_low_block',
+    name: 'Compact Anchor',
+    tier: 'bronze',
+    category: 'DEFENSE',
+    costCoins: 450,
+    costShards: 30,
+    shortTag: 'DEF+',
+    desc: 'Disciplined tackles and stronger defensive duel timing.',
+    effects: { defMult: 1.14, pressMult: 1.08 },
+  },
+  {
+    id: 'ps_sprint_burst',
+    name: 'Quick Step',
+    tier: 'bronze',
+    category: 'ATTACK',
+    costCoins: 500,
+    costShards: 35,
+    shortTag: 'PAC+',
+    desc: 'Sharper acceleration bursts into open space on transitions.',
+    effects: { pacMult: 1.10, burstMult: 1.18 },
+  },
+
+  // SILVER (4)
+  {
+    id: 'ps_whipped_cross',
+    name: 'Whipped Crosser',
+    tier: 'silver',
+    category: 'MIDFIELD',
+    costCoins: 950,
+    costShards: 70,
+    shortTag: 'CRS++',
+    desc: 'Laser-guided early & byline aerial crosses straight onto attackers.',
+    effects: { crossMult: 1.55, pasMult: 1.14 },
+  },
+  {
+    id: 'ps_lob_master',
+    name: 'Lobbed Through Master',
+    tier: 'silver',
+    category: 'MIDFIELD',
+    costCoins: 1050,
+    costShards: 80,
+    shortTag: 'LOB++',
+    desc: 'Unlocks frequent pin-point aerial lobbed passes right over defenders.',
+    effects: { lobFreq: 2.35, pasMult: 1.16 },
+  },
+  {
+    id: 'ps_interceptor',
+    name: 'Pressing Engine',
+    tier: 'silver',
+    category: 'DEFENSE',
+    costCoins: 1000,
+    costShards: 75,
+    shortTag: 'PRS++',
+    desc: 'Relentless off-ball closing speed and high-line midfield interceptions.',
+    effects: { pressMult: 1.28, defMult: 1.18, pacMult: 1.08 },
+  },
+  {
+    id: 'ps_sweeper_gk',
+    name: 'Sweeper Keeper+',
+    tier: 'silver',
+    category: 'DEFENSE',
+    costCoins: 950,
+    costShards: 70,
+    shortTag: 'GK++',
+    desc: 'Wider keeper save reach, faster dive reactions, and fearless sweeping.',
+    effects: { gkMult: 1.32, pasMult: 1.08 },
+  },
+
+  // GOLD (4)
+  {
+    id: 'ps_clinical_finisher',
+    name: 'Clinical Finisher+',
+    tier: 'gold',
+    category: 'ATTACK',
+    costCoins: 1900,
+    costShards: 150,
+    shortTag: 'FIN+++',
+    desc: 'Massive boost to finishing precision, shot power, and 1v1 conversion.',
+    effects: { finMult: 1.48, shoMult: 1.32 },
+  },
+  {
+    id: 'ps_long_shot_cannon',
+    name: 'Long Shot Cannon',
+    tier: 'gold',
+    category: 'ATTACK',
+    costCoins: 2100,
+    costShards: 170,
+    shortTag: 'RNG+++',
+    desc: 'Supercharges outside-the-box screamers with blisteringly fast top-bin trajectory.',
+    effects: { longShotFreq: 2.6, shoMult: 1.42, finMult: 1.18 },
+  },
+  {
+    id: 'ps_tiki_taka',
+    name: 'Tiki-Taka Architects',
+    tier: 'gold',
+    category: 'MIDFIELD',
+    costCoins: 1850,
+    costShards: 145,
+    shortTag: 'PAS+++',
+    desc: 'Thread-the-needle ground triangles, vision surge, and aerial lob outlets.',
+    effects: { pasMult: 1.38, lobFreq: 1.55, driMult: 1.15 },
+  },
+  {
+    id: 'ps_brick_wall',
+    name: 'Brick Wall Defense',
+    tier: 'gold',
+    category: 'DEFENSE',
+    costCoins: 2000,
+    costShards: 160,
+    shortTag: 'WALL+++',
+    desc: 'Lockdown 1v1 standing tackles, expanded block radius, and keeper command.',
+    effects: { defMult: 1.42, gkMult: 1.18, pressMult: 1.18 },
+  },
+
+  // PURPLE / MYTHIC (3)
+  {
+    id: 'ps_rapid_maestro',
+    name: 'Glitch Dribbler',
+    tier: 'purple',
+    category: 'SPECIAL',
+    costCoins: 3600,
+    costShards: 320,
+    shortTag: 'DRI MAX',
+    desc: 'Elite burst speed, ankle-breaking turns, and tackle resistance through traffic.',
+    effects: { driMult: 1.55, pacMult: 1.24, burstMult: 1.45, finMult: 1.18 },
+  },
+  {
+    id: 'ps_deadeye_screamer',
+    name: 'Deadeye Longshot+',
+    tier: 'purple',
+    category: 'SPECIAL',
+    costCoins: 4200,
+    costShards: 380,
+    shortTag: 'SHOT MAX',
+    desc: 'Unstoppable curled rockets from anywhere near 30 yards plus clinical box poise.',
+    effects: { longShotFreq: 3.4, shoMult: 1.58, finMult: 1.45, lobFreq: 1.65 },
+  },
+  {
+    id: 'ps_total_football',
+    name: 'Total Football Crown',
+    tier: 'purple',
+    category: 'SPECIAL',
+    costCoins: 5000,
+    costShards: 450,
+    shortTag: 'ALL MAX',
+    desc: 'Complete club surge across pace, finishing, passing, lobs, dribbling, defending & GK.',
+    effects: {
+      pacMult: 1.22,
+      burstMult: 1.32,
+      shoMult: 1.34,
+      finMult: 1.36,
+      longShotFreq: 1.85,
+      pasMult: 1.34,
+      lobFreq: 1.65,
+      crossMult: 1.35,
+      driMult: 1.35,
+      defMult: 1.34,
+      gkMult: 1.28,
+      pressMult: 1.25,
+    },
+  },
+];
+
+export const PLAYSTYLE_BY_ID: Record<string, PlaystyleDef> = Object.fromEntries(
+  PLAYSTYLES.map((p) => [p.id, p])
+);
+
+export interface ComputedPlaystyleMods {
+  pacMult: number;
+  burstMult: number;
+  shoMult: number;
+  finMult: number;
+  longShotFreq: number;
+  pasMult: number;
+  lobFreq: number;
+  crossMult: number;
+  driMult: number;
+  defMult: number;
+  gkMult: number;
+  pressMult: number;
+}
+
+export function computePlaystyleMods(playstyleIds?: string[]): ComputedPlaystyleMods {
+  const mods: ComputedPlaystyleMods = {
+    pacMult: 1,
+    burstMult: 1,
+    shoMult: 1,
+    finMult: 1,
+    longShotFreq: 1,
+    pasMult: 1,
+    lobFreq: 1,
+    crossMult: 1,
+    driMult: 1,
+    defMult: 1,
+    gkMult: 1,
+    pressMult: 1,
+  };
+  if (!Array.isArray(playstyleIds)) return mods;
+  const unique = Array.from(new Set(playstyleIds)).slice(0, 4);
+  for (const id of unique) {
+    const def = PLAYSTYLE_BY_ID[id];
+    if (!def) continue;
+    const fx = def.effects;
+    if (fx.pacMult) mods.pacMult *= fx.pacMult;
+    if (fx.burstMult) mods.burstMult *= fx.burstMult;
+    if (fx.shoMult) mods.shoMult *= fx.shoMult;
+    if (fx.finMult) mods.finMult *= fx.finMult;
+    if (fx.longShotFreq) mods.longShotFreq *= fx.longShotFreq;
+    if (fx.pasMult) mods.pasMult *= fx.pasMult;
+    if (fx.lobFreq) mods.lobFreq *= fx.lobFreq;
+    if (fx.crossMult) mods.crossMult *= fx.crossMult;
+    if (fx.driMult) mods.driMult *= fx.driMult;
+    if (fx.defMult) mods.defMult *= fx.defMult;
+    if (fx.gkMult) mods.gkMult *= fx.gkMult;
+    if (fx.pressMult) mods.pressMult *= fx.pressMult;
+  }
+  return mods;
+}
+
+export interface RedeemCodeDef {
+  code: string;
+  coins: number;
+  shards: number;
+  repeatable: boolean;
+  label: string;
+}
+
+export const REDEEM_CODES: Record<string, RedeemCodeDef> = {
+  '126MDIH': {
+    code: '126MDIH',
+    coins: 20000,
+    shards: 10000,
+    repeatable: true,
+    label: 'Kick Dih FC Vault Drop',
+  },
+};
+
+export function redeemCodeReward(inputCode: string): {
+  valid: boolean;
+  code: string;
+  coins: number;
+  shards: number;
+  message: string;
+} {
+  const norm = String(inputCode || '').trim().toUpperCase();
+  const entry = REDEEM_CODES[norm];
+  if (!entry) {
+    return { valid: false, code: norm, coins: 0, shards: 0, message: 'Invalid redeem code.' };
+  }
+  return {
+    valid: true,
+    code: entry.code,
+    coins: entry.coins,
+    shards: entry.shards,
+    message: `Redeemed ${entry.code}: +${entry.coins.toLocaleString()} Coins & +${entry.shards.toLocaleString()} Shards!`,
+  };
+}
+
 export interface FormationSlot {
   slotIndex: number;
   pos: Position;
@@ -613,6 +921,8 @@ export interface PitchDot {
   diveTimer: number;
   diveVy: number;
   dribbleCD?: number;
+  tackleCD?: number;
+  burstPhase?: number;
 }
 
 export interface PitchBall {
@@ -636,21 +946,28 @@ export interface SimMatchState {
   awayScore: number;
   homeShots: number;
   awayShots: number;
+  homeLongShots?: number;
+  awayLongShots?: number;
   homePossessionTicks: number;
   awayPossessionTicks: number;
   elapsedMinutes: number; // 0..90
+  halfTimeDone?: boolean;
   freezeTicks: number;
   goalBannerTimer: number;
   lastEvent: string | null;
   kickoffTimer?: number;
   carryTime?: number;
   passTargetId?: string | null;
-  shotInFlight?: { team: 'home' | 'away'; shooterName: string } | null;
+  shotInFlight?: { team: 'home' | 'away'; shooterName: string; isLongShot?: boolean } | null;
   gkHoldTimer?: number;
   homeTactics?: TeamTactics;
   awayTactics?: TeamTactics;
+  homePlaystyles?: string[];
+  awayPlaystyles?: string[];
   homePasses?: number;
   awayPasses?: number;
+  homeLobs?: number;
+  awayLobs?: number;
   homeCrosses?: number;
   awayCrosses?: number;
   homeDribbles?: number;
@@ -675,6 +992,7 @@ export function stepMatchPhysics(state: SimMatchState, dt: number, rng: () => nu
   const padY = Math.round(pitchH * 0.039);
   const goalTop = pitchH * 0.415;
   const goalBot = pitchH * 0.585;
+  const boxW = Math.round(pitchW * 0.131); // ~168px on 1280w
 
   if (state.freezeTicks > 0) {
     state.freezeTicks -= 1;
@@ -689,6 +1007,16 @@ export function stepMatchPhysics(state: SimMatchState, dt: number, rng: () => nu
   }
   if ((state.gkHoldTimer || 0) > 0) {
     state.gkHoldTimer = Math.max(0, (state.gkHoldTimer || 0) - dt);
+  }
+
+  // Advance match clock & trigger Halftime (45') clean center kickoff reset
+  state.elapsedMinutes += dt * 1.85;
+  if (state.elapsedMinutes >= 45 && !state.halfTimeDone) {
+    state.halfTimeDone = true;
+    state.elapsedMinutes = 45;
+    resetKickoff(state, 'away');
+    events.push('HALFTIME');
+    return events;
   }
 
   if (ball.kickCooldown > 0) {
@@ -721,23 +1049,46 @@ export function stepMatchPhysics(state: SimMatchState, dt: number, rng: () => nu
   // Nonlinear stat normalizer: OVR & stats create a clear real-football skill gap
   const statNorm = (val: number) => Math.pow(Math.max(0, Math.min(1, (val - 35) / 64)), 1.45);
   const dotOvr = (d: PitchDot) => d.ovr ?? Math.round((d.pac + d.sho + d.pas + d.dri + d.def + (d.phy ?? 70)) / 6);
+  const homeMods = computePlaystyleMods(state.homePlaystyles);
+  const awayMods = computePlaystyleMods(state.awayPlaystyles);
 
-  // Check GK swept saves before goal line check so rockets cannot tunnel through keepers
+  // Helper to force opposing outfielders outside the penalty area on goal kicks
+  const clearBoxForGoalKick = (gkTeam: 'home' | 'away') => {
+    const safeMinX = padX + boxW + 46;
+    const safeMaxX = pitchW - padX - boxW - 46;
+    for (const d of dots) {
+      if (d.redCarded || d.role === 'GK' || d.team === gkTeam) continue;
+      if (gkTeam === 'home' && d.x < safeMinX) {
+        d.x = safeMinX + 12 + rng() * 36;
+        d.vx = Math.max(0, d.vx);
+      } else if (gkTeam === 'away' && d.x > safeMaxX) {
+        d.x = safeMaxX - 12 - rng() * 36;
+        d.vx = Math.min(0, d.vx);
+      }
+    }
+  };
+
+  // Check GK swept saves before goal line check so shots don't unfairly tunnel,
+  // while blistering upper-corner outside-box rockets can still beat the keeper!
   if (!ball.ownerId && ball.kickCooldown <= 0 && ball.z < 52) {
     for (const gk of dots) {
       if (gk.redCarded || gk.role !== 'GK') continue;
-      const gkDefN = statNorm(gk.def);
+      const gkMods = gk.team === 'home' ? homeMods : awayMods;
+      const shooterMods = state.shotInFlight ? (state.shotInFlight.team === 'home' ? homeMods : awayMods) : null;
+      const gkDefN = Math.min(1.25, statNorm(gk.def) * gkMods.gkMult);
       const gkOvrN = statNorm(dotOvr(gk));
-      const gkReach = 14 + gkDefN * 20 + gkOvrN * 6;
+      const gkReach = 12.5 + gkDefN * 18 + gkOvrN * 5.5;
       const segDist = distPointToSeg(gk.x, gk.y, prevX, prevY, ball.x, ball.y);
       if (segDist < gkReach) {
         const isShot = Boolean(state.shotInFlight && state.shotInFlight.team !== gk.team);
         const speed = Math.hypot(ball.vx, ball.vy);
         if (isShot || speed > 220) {
-          const shotPowerPenalty = Math.min(0.32, Math.max(0, (speed - 360) / 1400));
-          const saveChance = Math.max(0.18, Math.min(0.84, 0.24 + gkDefN * 0.46 + gkOvrN * 0.14 - shotPowerPenalty));
+          const isLongRocket = Boolean(state.shotInFlight?.isLongShot);
+          const finisherEdge = shooterMods ? (shooterMods.finMult - 1) * 0.22 + (shooterMods.shoMult - 1) * 0.16 : 0;
+          const shotPowerPenalty = Math.min(0.42, Math.max(0, (speed - 340) / 1100)) + (isLongRocket ? 0.12 : 0) + finisherEdge;
+          const saveChance = Math.max(0.14, Math.min(0.82, 0.23 + gkDefN * 0.44 + gkOvrN * 0.12 - shotPowerPenalty));
           if (rng() < saveChance) {
-            const catchChance = 0.42 + gkDefN * 0.35 - shotPowerPenalty * 0.5;
+            const catchChance = 0.42 + gkDefN * 0.32 - shotPowerPenalty * 0.45;
             if (rng() < catchChance) {
               ball.ownerId = gk.id;
               ball.lastTouchTeam = gk.team;
@@ -747,8 +1098,8 @@ export function stepMatchPhysics(state: SimMatchState, dt: number, rng: () => nu
               ball.vy = 0;
               ball.vz = 0;
               ball.z = 0;
-              ball.kickCooldown = 0.22;
-              state.gkHoldTimer = 0.45;
+              ball.kickCooldown = 0.24;
+              state.gkHoldTimer = 0.55;
               state.shotInFlight = null;
               state.passTargetId = null;
               events.push(`SAVE_${gk.team.toUpperCase()}`);
@@ -758,8 +1109,8 @@ export function stepMatchPhysics(state: SimMatchState, dt: number, rng: () => nu
               const sideSign = ball.y >= pitchH / 2 ? 1 : -1;
               ball.ownerId = null;
               ball.lastTouchTeam = gk.team;
-              ball.x = gk.x + clearDir * 10;
-              ball.vx = clearDir * (170 + rng() * 110);
+              ball.x = gk.x + clearDir * 12;
+              ball.vx = clearDir * (180 + rng() * 110);
               ball.vy = sideSign * (210 + rng() * 140);
               ball.vz = 65;
               ball.kickCooldown = 0.28;
@@ -780,11 +1131,12 @@ export function stepMatchPhysics(state: SimMatchState, dt: number, rng: () => nu
 
   // Check goal or endline restart (Goal Kick / Corner)
   if (!ball.ownerId && ball.x <= padX) {
-    if (inGoalMouthY && ball.z < 50) {
+    if (inGoalMouthY && ball.z < 52) {
       state.awayScore += 1;
       state.goalBannerTimer = 2.0;
       state.freezeTicks = 40;
       events.push('GOAL_AWAY');
+      if (state.shotInFlight?.isLongShot) events.push('LONG_GOAL_AWAY');
       resetKickoff(state, 'home');
       return events;
     }
@@ -812,7 +1164,7 @@ export function stepMatchPhysics(state: SimMatchState, dt: number, rng: () => nu
       }
       events.push('CORNER_AWAY');
     } else {
-      // Goal kick for Home GK
+      // Goal kick for Home GK — push opposing strikers outside penalty box!
       const gk = dots.find((d) => d.team === 'home' && d.role === 'GK');
       ball.x = padX + 34;
       ball.y = pitchH * 0.5;
@@ -820,22 +1172,24 @@ export function stepMatchPhysics(state: SimMatchState, dt: number, rng: () => nu
       ball.vx = 0;
       ball.vy = 0;
       ball.vz = 0;
-      ball.kickCooldown = 0.25;
+      ball.kickCooldown = 0.30;
+      clearBoxForGoalKick('home');
       if (gk) {
         gk.x = ball.x;
         gk.y = ball.y;
         ball.ownerId = gk.id;
         ball.lastTouchTeam = 'home';
-        state.gkHoldTimer = 0.35;
+        state.gkHoldTimer = 0.65;
       }
       events.push('GOALKICK_HOME');
     }
   } else if (!ball.ownerId && ball.x >= pitchW - padX) {
-    if (inGoalMouthY && ball.z < 50) {
+    if (inGoalMouthY && ball.z < 52) {
       state.homeScore += 1;
       state.goalBannerTimer = 2.0;
       state.freezeTicks = 40;
       events.push('GOAL_HOME');
+      if (state.shotInFlight?.isLongShot) events.push('LONG_GOAL_HOME');
       resetKickoff(state, 'away');
       return events;
     }
@@ -863,7 +1217,7 @@ export function stepMatchPhysics(state: SimMatchState, dt: number, rng: () => nu
       }
       events.push('CORNER_HOME');
     } else {
-      // Goal kick for Away GK
+      // Goal kick for Away GK — push opposing strikers outside penalty box!
       const gk = dots.find((d) => d.team === 'away' && d.role === 'GK');
       ball.x = pitchW - padX - 34;
       ball.y = pitchH * 0.5;
@@ -871,13 +1225,14 @@ export function stepMatchPhysics(state: SimMatchState, dt: number, rng: () => nu
       ball.vx = 0;
       ball.vy = 0;
       ball.vz = 0;
-      ball.kickCooldown = 0.25;
+      ball.kickCooldown = 0.30;
+      clearBoxForGoalKick('away');
       if (gk) {
         gk.x = ball.x;
         gk.y = ball.y;
         ball.ownerId = gk.id;
         ball.lastTouchTeam = 'away';
-        state.gkHoldTimer = 0.35;
+        state.gkHoldTimer = 0.65;
       }
       events.push('GOALKICK_AWAY');
     }
@@ -949,14 +1304,15 @@ export function stepMatchPhysics(state: SimMatchState, dt: number, rng: () => nu
   }
   homeXs.sort((a, b) => a - b);
   awayXs.sort((a, b) => b - a);
-  const homeBackLineX = homeXs[1] ?? padX + 120;
-  const awayBackLineX = awayXs[1] ?? pitchW - padX - 120;
+  const homeBackLineX = homeXs[1] ?? padX + boxW;
+  const awayBackLineX = awayXs[1] ?? pitchW - padX - boxW;
 
   const homeTac = state.homeTactics || DEFAULT_TACTICS;
   const awayTac = state.awayTactics || DEFAULT_TACTICS;
   const ballRatioX = ball.x / pitchW;
   const ownerDot = ball.ownerId ? dots.find((d) => d.id === ball.ownerId) || null : null;
   const possessingTeam = ownerDot ? ownerDot.team : ball.lastTouchTeam;
+  const gkHoldingBall = Boolean(ownerDot && ownerDot.role === 'GK' && (state.gkHoldTimer || 0) > 0);
 
   for (const dot of dots) {
     if (dot.redCarded) continue;
@@ -969,21 +1325,31 @@ export function stepMatchPhysics(state: SimMatchState, dt: number, rng: () => nu
     if ((dot.dribbleCD || 0) > 0) {
       dot.dribbleCD = Math.max(0, (dot.dribbleCD || 0) - dt);
     }
+    if ((dot.tackleCD || 0) > 0) {
+      dot.tackleCD = Math.max(0, (dot.tackleCD || 0) - dt);
+    }
 
     const tac = dot.team === 'home' ? homeTac : awayTac;
+    const mods = dot.team === 'home' ? homeMods : awayMods;
     const isOwner = ball.ownerId === dot.id;
     const ovrN = statNorm(dotOvr(dot));
-    const pacN = statNorm(dot.pac);
-    const driN = statNorm(dot.dri);
-    const defN = statNorm(dot.def);
+    const pacN = Math.min(1.3, statNorm(dot.pac) * mods.pacMult);
+    const driN = Math.min(1.35, statNorm(dot.dri) * mods.driMult);
+    const defN = Math.min(1.35, statNorm(dot.def) * mods.defMult);
     const phyN = statNorm(dot.phy ?? 70);
-    const shoN = statNorm(dot.sho);
-    const finN = statNorm(dot.fin ?? dot.sho);
-    const pasN = statNorm(dot.pas);
-    const visN = statNorm(dot.vis ?? dot.pas);
+    const shoN = Math.min(1.4, statNorm(dot.sho) * mods.shoMult);
+    const finN = Math.min(1.4, statNorm(dot.fin ?? dot.sho) * mods.finMult);
+    const pasN = Math.min(1.35, statNorm(dot.pas) * mods.pasMult);
+    const visN = Math.min(1.35, statNorm(dot.vis ?? dot.pas) * mods.pasMult);
 
-    const pressBoost = dot === nearestHome || dot === nearestAway ? 0.94 + (tac.aggressiveness / 100) * 0.16 + ovrN * 0.06 : 1;
-    const speedBase = (78 + pacN * 144 + ovrN * 16) * pressBoost;
+    // Variable burst/cruise pace ("sometimes fast, sometimes not") & slightly slower realistic match tempo
+    dot.burstPhase = (dot.burstPhase ?? (dot.slotIndex * 1.13)) + dt * (1.25 + pacN * 0.7);
+    const burstWave = Math.sin(dot.burstPhase);
+    const burstFactor = 0.86 + (burstWave > 0.2 ? 0.24 * mods.burstMult : 0.0) + (isOwner && burstWave > 0 ? 0.08 : 0);
+    const pressBoost = dot === nearestHome || dot === nearestAway
+      ? (0.92 + (tac.aggressiveness / 100) * 0.14 + ovrN * 0.05) * mods.pressMult
+      : 1;
+    const speedBase = (64 + pacN * 116 + ovrN * 14) * pressBoost * burstFactor;
     const pos = dot.pos || dot.role;
     const traits = dot.traits || [];
     let targetX = dot.homeX;
@@ -991,7 +1357,7 @@ export function stepMatchPhysics(state: SimMatchState, dt: number, rng: () => nu
 
     if (dot.role === 'GK') {
       const baseX = dot.team === 'home' ? padX + 20 : pitchW - padX - 20;
-      const sweeperRange = traits.includes('Sweeper Keeper') ? 34 : 16;
+      const sweeperRange = traits.includes('Sweeper Keeper') || mods.gkMult > 1.15 ? 32 : 15;
       const stepOut = dot.team === 'home'
         ? (ball.x < pitchW * 0.25 ? sweeperRange : 0)
         : (ball.x > pitchW * 0.75 ? -sweeperRange : 0);
@@ -1009,33 +1375,32 @@ export function stepMatchPhysics(state: SimMatchState, dt: number, rng: () => nu
       for (const opp of dots) {
         if (opp.team === dot.team || opp.redCarded) continue;
         const od = Math.hypot(dot.x - opp.x, dot.y - opp.y);
-        if (od < 76 && od > 1) {
-          const evadeBoost = (0.55 + driN * 0.85 + ovrN * 0.25) * (0.7 + (tac.dribbleTendency / 100) * 0.65);
-          repelX += ((dot.x - opp.x) / od) * ((76 - od) / 76) * 78 * evadeBoost;
-          repelY += ((dot.y - opp.y) / od) * ((76 - od) / 76) * 105 * evadeBoost;
-          if (od < 34 && (dot.dribbleCD || 0) <= 0 && rng() < (0.02 + driN * 0.09) * (0.6 + tac.dribbleTendency / 100)) {
+        if (od < 78 && od > 1) {
+          const evadeBoost = (0.55 + driN * 0.85 + ovrN * 0.22) * (0.7 + (tac.dribbleTendency / 100) * 0.65);
+          repelX += ((dot.x - opp.x) / od) * ((78 - od) / 78) * 74 * evadeBoost;
+          repelY += ((dot.y - opp.y) / od) * ((78 - od) / 78) * 102 * evadeBoost;
+          if (od < 34 && (dot.dribbleCD || 0) <= 0 && rng() < (0.02 + driN * 0.085) * (0.6 + tac.dribbleTendency / 100)) {
             evaded = true;
           }
         }
       }
       if (evaded) {
-        dot.dribbleCD = 0.75;
+        dot.dribbleCD = 0.8;
         if (dot.team === 'home') state.homeDribbles = (state.homeDribbles || 0) + 1;
         else state.awayDribbles = (state.awayDribbles || 0) + 1;
         events.push(`DRIBBLE_${dot.team.toUpperCase()}:${dot.name}`);
       }
 
-      // Wingers drive wide before cutting in or crossing; strikers drive directly at box
       const preferFlank = isWideRole && distGoal > pitchW * 0.12 && tac.crossIntensity >= 45;
       const desiredY = preferFlank
         ? (dot.y < pitchH * 0.5 ? padY + 62 : pitchH - padY - 62)
         : pitchH * 0.5;
-      targetX = Math.max(padX + 20, Math.min(pitchW - padX - 20, dot.x + attackDir * 140 + repelX));
+      targetX = Math.max(padX + 20, Math.min(pitchW - padX - 20, dot.x + attackDir * 135 + repelX));
       targetY = Math.max(padY + 22, Math.min(pitchH - padY - 22, dot.y + (desiredY - dot.y) * 0.28 + repelY));
     } else if (state.passTargetId === dot.id && !ball.ownerId) {
       targetX = ball.x + ball.vx * 0.16;
       targetY = ball.y + ball.vy * 0.16;
-    } else if (dot === nearestHome || dot === nearestAway) {
+    } else if ((dot === nearestHome || dot === nearestAway) && !(gkHoldingBall && ownerDot?.team !== dot.team)) {
       targetX = ball.x;
       targetY = ball.y;
     } else {
@@ -1043,8 +1408,8 @@ export function stepMatchPhysics(state: SimMatchState, dt: number, rng: () => nu
       const attackDir = dot.team === 'home' ? 1 : -1;
       const lineBias = ((tac.positioningLine - 50) / 100) * pitchW * 0.18 * attackDir;
       const freedom = 0.28 + (tac.positioningFreedom / 100) * 0.45;
-      const phaseBias = teamAttacking ? attackDir * pitchW * 0.075 : -attackDir * pitchW * 0.085;
-      const shiftX = (ballRatioX - 0.5) * pitchW * (0.32 + freedom * 0.22) + phaseBias + lineBias;
+      const phaseBias = teamAttacking ? attackDir * pitchW * 0.075 : -attackDir * pitchW * 0.065;
+      const shiftX = (ballRatioX - 0.5) * pitchW * (0.30 + freedom * 0.20) + phaseBias + lineBias;
       targetX = dot.homeX + shiftX;
       targetY = dot.homeY + (ball.y - pitchH * 0.5) * (0.18 + freedom * 0.2);
 
@@ -1068,7 +1433,7 @@ export function stepMatchPhysics(state: SimMatchState, dt: number, rng: () => nu
           else targetX = Math.max(targetX, homeBackLineX + 6);
         }
       } else {
-        // Defending: Man marking vs Zonal shape
+        // Defending: Man marking vs Zonal shape, without camping inside own penalty box!
         if ((dot.role === 'DEF' || pos === 'CDM') && tac.manMarking >= 35) {
           let markOpp: PitchDot | null = null;
           let markDist = 175 + tac.manMarking * 1.4;
@@ -1081,17 +1446,30 @@ export function stepMatchPhysics(state: SimMatchState, dt: number, rng: () => nu
             }
           }
           if (markOpp) {
-            const w = (tac.manMarking / 100) * 0.68;
+            const w = (tac.manMarking / 100) * 0.65;
             const goalSideX = markOpp.x - attackDir * 16;
             targetX = targetX * (1 - w) + goalSideX * w;
             targetY = targetY * (1 - w) + markOpp.y * w;
           }
         }
         if (dot.role === 'DEF') {
-          const ownGoalX = dot.team === 'home' ? padX + 55 : pitchW - padX - 55;
-          const deepPull = Math.max(0.15, 0.48 - (tac.positioningLine / 100) * 0.28);
-          targetX = ownGoalX * deepPull + targetX * (1 - deepPull);
+          const lineDepth = padX + boxW + 28 + (tac.positioningLine / 100) * 145;
+          const ballNearOwnBox = dot.team === 'home' ? ball.x < padX + boxW + 60 : ball.x > pitchW - padX - boxW - 60;
+          if (!ballNearOwnBox) {
+            if (dot.team === 'home') {
+              targetX = Math.max(lineDepth * 0.85, Math.min(pitchW * 0.56, targetX));
+            } else {
+              const rightLine = pitchW - lineDepth;
+              targetX = Math.min(pitchW - lineDepth * 0.85, Math.max(pitchW * 0.44, Math.min(targetX, rightLine + 80)));
+            }
+          }
         }
+      }
+
+      // Goal-kick respect: keep opponents outside penalty box while GK resets!
+      if (gkHoldingBall && ownerDot && ownerDot.team !== dot.team) {
+        if (ownerDot.team === 'home') targetX = Math.max(targetX, padX + boxW + 48);
+        else targetX = Math.min(targetX, pitchW - padX - boxW - 48);
       }
 
       targetX = Math.max(padX + 28, Math.min(pitchW - padX - 28, targetX));
@@ -1103,7 +1481,7 @@ export function stepMatchPhysics(state: SimMatchState, dt: number, rng: () => nu
     const dist = Math.hypot(dx, dy);
 
     if (dist > 3) {
-      const turnRate = 0.08 + driN * 0.16 + ovrN * 0.05;
+      const turnRate = Math.min(0.45, 0.075 + driN * 0.14 + ovrN * 0.045);
       const desiredVx = (dx / dist) * speedBase;
       const desiredVy = (dy / dist) * speedBase;
       dot.vx += (desiredVx - dot.vx) * turnRate;
@@ -1113,10 +1491,14 @@ export function stepMatchPhysics(state: SimMatchState, dt: number, rng: () => nu
     }
 
     // Outfield ball pickup / interception / tackle / shot block
-    if (dot.role !== 'GK' && ball.kickCooldown <= 0 && ball.z < 26) {
+    // Lobbed passes (z >= 26) fly cleanly over intermediate ground defenders!
+    if (dot.role !== 'GK' && ball.kickCooldown <= 0 && ball.z < 26 && (dot.tackleCD || 0) <= 0) {
+      if (gkHoldingBall && ownerDot?.team !== dot.team) {
+        continue;
+      }
       const segDist = distPointToSeg(dot.x, dot.y, prevX, prevY, ball.x, ball.y);
       const aggFactor = tac.aggressiveness / 100;
-      const reach = 9.5 + defN * 4.5 + ovrN * 2.5 + aggFactor * 2.2;
+      const reach = 9.0 + Math.min(1.25, defN) * 4.2 + ovrN * 2.2 + aggFactor * 2.0;
       if (segDist < reach) {
         if (state.shotInFlight && state.shotInFlight.team !== dot.team && !ball.ownerId) {
           ball.vx = (dot.team === 'home' ? 1 : -1) * (110 + rng() * 90);
@@ -1128,34 +1510,55 @@ export function stepMatchPhysics(state: SimMatchState, dt: number, rng: () => nu
           events.push(`BLOCK_${dot.team.toUpperCase()}`);
           continue;
         }
-        const ownerDriN = ownerDot ? statNorm(ownerDot.dri) : 0;
+        const ownerMods = ownerDot ? (ownerDot.team === 'home' ? homeMods : awayMods) : null;
+        const ownerDriN = ownerDot ? statNorm(ownerDot.dri) * (ownerMods?.driMult || 1) : 0;
         const ownerPhyN = ownerDot ? statNorm(ownerDot.phy ?? 70) : 0;
         const ownerOvrN = ownerDot ? statNorm(dotOvr(ownerDot)) : 0;
+        // Balanced defending: defenders win cleanly most of the time (~58-76%), not 100%, with zero two-player ping-pong glitch
         const tackleOdds = Math.max(
-          0.05,
-          Math.min(0.75, 0.12 + defN * 0.42 + phyN * 0.18 + ovrN * 0.16 + aggFactor * 0.16 - ownerDriN * 0.28 - ownerPhyN * 0.12 - ownerOvrN * 0.14)
+          0.14,
+          Math.min(0.76, 0.24 + defN * 0.36 + phyN * 0.14 + ovrN * 0.14 + aggFactor * 0.12 - ownerDriN * 0.24 - ownerPhyN * 0.08 - ownerOvrN * 0.10)
         );
-        const looseControlOdds = ball.ownerId ? tackleOdds : Math.min(0.98, 0.45 + ovrN * 0.45 + driN * 0.15);
-        if ((!ball.ownerId && rng() < looseControlOdds) || (ball.ownerId && ball.lastTouchTeam !== dot.team && rng() < tackleOdds)) {
-          if (ball.ownerId && ball.lastTouchTeam !== dot.team) {
-            if (dot.team === 'home') state.homeTackles = (state.homeTackles || 0) + 1;
-            else state.awayTackles = (state.awayTackles || 0) + 1;
-            events.push(`TACKLE_${dot.team.toUpperCase()}`);
-            if (rng() < 0.015 + aggFactor * 0.045) events.push(`FOUL_${dot.team.toUpperCase()}`);
-          }
+        const looseControlOdds = ball.ownerId ? tackleOdds : Math.min(0.96, 0.52 + ovrN * 0.36 + driN * 0.12);
+        if (!ball.ownerId && rng() < looseControlOdds) {
           ball.ownerId = dot.id;
           ball.lastTouchTeam = dot.team;
           ball.z = 0;
           ball.vz = 0;
-          ball.kickCooldown = 0.18;
+          ball.kickCooldown = 0.26;
           state.carryTime = 0;
           state.passTargetId = null;
           state.shotInFlight = null;
+        } else if (ball.ownerId && ball.lastTouchTeam !== dot.team && ownerDot) {
+          if (rng() < tackleOdds) {
+            if (dot.team === 'home') state.homeTackles = (state.homeTackles || 0) + 1;
+            else state.awayTackles = (state.awayTackles || 0) + 1;
+            events.push(`TACKLE_${dot.team.toUpperCase()}`);
+            if (rng() < 0.014 + aggFactor * 0.04) events.push(`FOUL_${dot.team.toUpperCase()}`);
+            // Separate tackled opponent cleanly so two dots never vibrate/glitch on the same spot
+            const sepAngle = Math.atan2(ownerDot.y - dot.y, ownerDot.x - dot.x);
+            ownerDot.x = Math.max(padX + 12, Math.min(pitchW - padX - 12, ownerDot.x + Math.cos(sepAngle) * 16));
+            ownerDot.y = Math.max(padY + 12, Math.min(pitchH - padY - 12, ownerDot.y + Math.sin(sepAngle) * 16));
+            ownerDot.tackleCD = 0.48;
+            dot.tackleCD = 0.30;
+            ball.ownerId = dot.id;
+            ball.lastTouchTeam = dot.team;
+            ball.z = 0;
+            ball.vz = 0;
+            ball.kickCooldown = 0.36;
+            state.carryTime = 0;
+            state.passTargetId = null;
+            state.shotInFlight = null;
+          } else {
+            // Failed challenge gives carrier clean breathing room
+            dot.tackleCD = 0.42;
+            ball.kickCooldown = 0.20;
+          }
         }
       }
     }
 
-    // Owner decision: GK distribution, kickoff back-pass, shoot, cross, dribble, or pass
+    // Owner decision: GK distribution, kickoff back-pass, shoot, cross, lob, dribble, or pass
     if (ball.ownerId === dot.id) {
       ball.x = dot.x + (dot.team === 'home' ? 8 : -8);
       ball.y = dot.y;
@@ -1172,12 +1575,12 @@ export function stepMatchPhysics(state: SimMatchState, dt: number, rng: () => nu
             const pdx = target.x - dot.x;
             const pdy = target.y - dot.y;
             const pLen = Math.hypot(pdx, pdy) || 1;
-            const passSpeed = Math.min(420, 230 + pLen * 0.75);
+            const passSpeed = Math.min(430, 235 + pLen * 0.72);
             ball.ownerId = null;
             ball.vx = (pdx / pLen) * passSpeed;
             ball.vy = (pdy / pLen) * passSpeed;
-            ball.vz = pLen > 240 ? 95 : 10;
-            ball.kickCooldown = 0.26;
+            ball.vz = pLen > 210 ? 125 : 22;
+            ball.kickCooldown = 0.28;
             state.passTargetId = target.id;
             if (dot.team === 'home') state.homePasses = (state.homePasses || 0) + 1;
             else state.awayPasses = (state.awayPasses || 0) + 1;
@@ -1196,7 +1599,7 @@ export function stepMatchPhysics(state: SimMatchState, dt: number, rng: () => nu
             const pdx = target.x - dot.x;
             const pdy = target.y - dot.y;
             const pLen = Math.hypot(pdx, pdy) || 1;
-            const passSpeed = 240;
+            const passSpeed = 235;
             ball.ownerId = null;
             ball.vx = (pdx / pLen) * passSpeed;
             ball.vy = (pdy / pLen) * passSpeed;
@@ -1222,28 +1625,43 @@ export function stepMatchPhysics(state: SimMatchState, dt: number, rng: () => nu
       const goalX = dot.team === 'home' ? pitchW - padX : padX;
       const distToGoal = Math.hypot(goalX - dot.x, pitchH * 0.5 - dot.y);
       const shootScale = 0.5 + (tac.shootIntensity / 100) * 1.1;
-      const maxShotRange = pitchW * (0.14 + shoN * 0.09 + (tac.shootIntensity / 100) * 0.08 + (traits.includes('Long Shot') ? 0.04 : 0));
-      const goodAngle = Math.abs(dot.y - pitchH * 0.5) < pitchH * 0.28;
-      const roleShootBoost = dot.role === 'FWD' ? 1.38 : dot.role === 'DEF' ? 0.42 : 0.9;
-      const shotProb = (distToGoal < pitchW * 0.13 ? (0.08 + finN * 0.14 + ovrN * 0.05) : (0.016 + shoN * 0.055 + finN * 0.035)) * shootScale * roleShootBoost;
+      const longShotRangeBonus = (mods.longShotFreq - 1) * 0.045 + (traits.includes('Long Shot') ? 0.04 : 0);
+      const maxShotRange = pitchW * Math.min(0.41, 0.18 + shoN * 0.095 + (tac.shootIntensity / 100) * 0.075 + longShotRangeBonus);
+      const goodAngle = Math.abs(dot.y - pitchH * 0.5) < pitchH * 0.29;
+      const roleShootBoost = dot.role === 'FWD' ? 1.38 : dot.role === 'DEF' ? 0.36 : 0.96;
+      const isOutsideBox = distToGoal > boxW + 38;
+      const longShotProb = (0.008 + shoN * 0.022 + (traits.includes('Long Shot') ? 0.012 : 0)) * mods.longShotFreq;
+      const shotProb = (
+        !isOutsideBox
+          ? (0.085 + finN * 0.15 + ovrN * 0.05)
+          : longShotProb
+      ) * shootScale * roleShootBoost;
 
       if ((state.carryTime || 0) > 0.18 && distToGoal < maxShotRange && goodAngle && rng() < shotProb) {
-        const spread = (1 - finN) * (pitchH * 0.175) + (1 - ovrN) * (pitchH * 0.045) + (nearestOppDist < 34 ? pitchH * 0.045 : 0);
-        const aimY = pitchH * 0.5 + (rng() - 0.5) * (goalBot - goalTop + spread * 2);
+        const cornerAimBoost = isOutsideBox && (mods.longShotFreq > 1.3 || shoN > 0.65) ? 0.65 : 1.0;
+        const spread = ((1 - Math.min(1, finN)) * (pitchH * 0.165) + (1 - ovrN) * (pitchH * 0.04) + (nearestOppDist < 30 ? pitchH * 0.04 : 0)) * cornerAimBoost;
+        // Aim towards upper/lower corners cleanly on long shots so screamers beat keepers rarely
+        const targetCornerOffset = isOutsideBox ? (rng() < 0.5 ? -0.36 : 0.36) * (goalBot - goalTop) : 0;
+        const aimY = pitchH * 0.5 + targetCornerOffset + (rng() - 0.5) * ((goalBot - goalTop) * 0.7 + spread * 1.6);
         const sdx = goalX - dot.x;
         const sdy = aimY - dot.y;
         const sLen = Math.hypot(sdx, sdy) || 1;
-        const shotSpeed = 365 + shoN * 290 + ovrN * 45;
+        const shotSpeed = (isOutsideBox ? 450 : 380) + shoN * 260 + ovrN * 42;
         ball.ownerId = null;
         ball.vx = (sdx / sLen) * shotSpeed;
         ball.vy = (sdy / sLen) * shotSpeed;
-        ball.vz = 18 + rng() * 45;
+        ball.vz = isOutsideBox ? (38 + rng() * 44) : (16 + rng() * 38);
         ball.kickCooldown = 0.28;
-        state.shotInFlight = { team: dot.team, shooterName: dot.name };
+        state.shotInFlight = { team: dot.team, shooterName: dot.name, isLongShot: isOutsideBox };
         state.passTargetId = null;
-        if (dot.team === 'home') state.homeShots += 1;
-        else state.awayShots += 1;
-        events.push(`SHOT_${dot.team.toUpperCase()}:${dot.name}`);
+        if (dot.team === 'home') {
+          state.homeShots += 1;
+          if (isOutsideBox) state.homeLongShots = (state.homeLongShots || 0) + 1;
+        } else {
+          state.awayShots += 1;
+          if (isOutsideBox) state.awayLongShots = (state.awayLongShots || 0) + 1;
+        }
+        events.push(isOutsideBox ? `LONGSHOT_${dot.team.toUpperCase()}:${dot.name}` : `SHOT_${dot.team.toUpperCase()}:${dot.name}`);
         continue;
       }
 
@@ -1253,25 +1671,25 @@ export function stepMatchPhysics(state: SimMatchState, dt: number, rng: () => nu
       const inWideChannel = dot.y < pitchH * 0.39 || dot.y > pitchH * 0.61;
       const isCrosserPos = pos === 'LW' || pos === 'RW' || pos === 'LM' || pos === 'RM' || pos === 'LB' || pos === 'RB';
       const crossTraitBoost = traits.includes('Whipped Crosser') ? 1.45 : 1.0;
-      const crossChance = (tac.crossIntensity / 100) * (0.14 + pasN * 0.10 + visN * 0.05) * crossTraitBoost * (isCrosserPos ? 1.45 : 0.75);
+      const crossChance = (tac.crossIntensity / 100) * (0.13 + pasN * 0.09 + visN * 0.04) * crossTraitBoost * mods.crossMult * (isCrosserPos ? 1.4 : 0.72);
 
-      if ((state.carryTime || 0) > 0.2 && inAttackingThird && inWideChannel && rng() < crossChance) {
+      if ((state.carryTime || 0) > 0.22 && inAttackingThird && inWideChannel && rng() < crossChance) {
         const boxTargets = dots.filter(
           (m) => m.team === dot.team && m.id !== dot.id && !m.redCarded && m.role !== 'GK' && (m.role === 'FWD' || m.pos === 'CAM' || m.pos === 'CM')
         );
         if (boxTargets.length > 0) {
           const target = boxTargets.find((m) => m.pos === 'ST') || boxTargets[0];
-          const crossErr = (1 - pasN) * 75;
+          const crossErr = (1 - Math.min(1, pasN)) * 70;
           const targetBoxX = dot.team === 'home' ? Math.max(target.x, pitchW - padX - 155) : Math.min(target.x, padX + 155);
-          const targetBoxY = pitchH * 0.5 + (rng() - 0.5) * (60 + crossErr);
+          const targetBoxY = pitchH * 0.5 + (rng() - 0.5) * (58 + crossErr);
           const cdx = targetBoxX - dot.x;
           const cdy = targetBoxY - dot.y;
           const cLen = Math.hypot(cdx, cdy) || 1;
-          const crossSpeed = Math.min(480, 275 + pasN * 75 + cLen * 0.52);
+          const crossSpeed = Math.min(470, 265 + pasN * 72 + cLen * 0.5);
           ball.ownerId = null;
           ball.vx = (cdx / cLen) * crossSpeed;
           ball.vy = (cdy / cLen) * crossSpeed;
-          ball.vz = 145 + rng() * 35;
+          ball.vz = 155 + rng() * 35;
           ball.kickCooldown = 0.28;
           state.passTargetId = target.id;
           if (dot.team === 'home') {
@@ -1286,16 +1704,16 @@ export function stepMatchPhysics(state: SimMatchState, dt: number, rng: () => nu
         }
       }
 
-      // Realistic Dribble vs Pass decision: hold & dribble longer before passing!
-      const underPressure = nearestOppDist < 42;
-      const minCarryForDribble = 0.44 + (tac.dribbleTendency / 100) * 0.56 - (tac.passIntensity / 100) * 0.34 + (traits.includes('Speed Dribbler') ? 0.16 : 0);
+      // Realistic Dribble vs Pass decision: carry longer, pass with purpose + occasional lobbed balls over lines
+      const underPressure = nearestOppDist < 40;
+      const minCarryForDribble = 0.48 + (tac.dribbleTendency / 100) * 0.56 - (tac.passIntensity / 100) * 0.32 + (traits.includes('Speed Dribbler') ? 0.16 : 0);
       if ((state.carryTime || 0) < minCarryForDribble && !underPressure) {
         continue;
       }
 
-      const rolePassBias = dot.role === 'DEF' ? 1.2 : pos === 'CM' || pos === 'CAM' ? 1.2 : pos === 'ST' ? 0.65 : 0.92;
-      const passTacScale = Math.max(0.16, 0.16 + Math.pow(tac.passIntensity / 100, 1.3) * 1.48 - (tac.dribbleTendency / 100) * 0.32);
-      const basePassProb = ((state.carryTime || 0) > 0.65 ? 0.026 : 0.011) + pasN * 0.024 + visN * 0.014 + (underPressure ? 0.042 : 0);
+      const rolePassBias = dot.role === 'DEF' ? 1.18 : pos === 'CM' || pos === 'CAM' ? 1.18 : pos === 'ST' ? 0.62 : 0.9;
+      const passTacScale = Math.max(0.16, 0.16 + Math.pow(tac.passIntensity / 100, 1.3) * 1.42 - (tac.dribbleTendency / 100) * 0.30);
+      const basePassProb = ((state.carryTime || 0) > 0.7 ? 0.025 : 0.010) + pasN * 0.022 + visN * 0.013 + (underPressure ? 0.038 : 0);
       const passChance = Math.max(0.004, basePassProb * passTacScale * rolePassBias);
 
       if (rng() < passChance) {
@@ -1303,6 +1721,7 @@ export function stepMatchPhysics(state: SimMatchState, dt: number, rng: () => nu
         if (mates.length > 0) {
           let bestMate = mates[0];
           let bestScore = -Infinity;
+          let bestLaneBlocked = false;
           for (const m of mates) {
             const progress = (m.x - dot.x) * attackDir;
             const distM = Math.hypot(m.x - dot.x, m.y - dot.y);
@@ -1316,31 +1735,49 @@ export function stepMatchPhysics(state: SimMatchState, dt: number, rng: () => nu
               const dRec = Math.hypot(opp.x - m.x, opp.y - m.y);
               if (dRec < minRecOpp) minRecOpp = dRec;
             }
-            // High Vision spots forward runs & avoids intercepted passing lanes!
-            const visionWeight = 0.4 + visN * 1.15;
-            let score = progress * 0.52 * visionWeight + Math.min(95, minRecOpp) * (0.65 + visN * 0.75) + (minLaneOpp < 22 ? -175 * visionWeight : minLaneOpp * 0.85 * visionWeight);
+            const visionWeight = 0.45 + visN * 1.1;
+            let score = progress * 0.52 * visionWeight + Math.min(95, minRecOpp) * (0.65 + visN * 0.75) + (minLaneOpp < 24 ? -145 * visionWeight : minLaneOpp * 0.85 * visionWeight);
             if (underPressure && progress < 0) score += 45;
             if ((traits.includes('Playmaker') || visN > 0.7) && progress > 45 && m.role === 'FWD') score += 48;
+            // Lob opportunity boosts forward runners when direct ground lane is blocked
+            if (progress > 90 && minLaneOpp < 24 && (visN > 0.55 || mods.lobFreq > 1.2)) {
+              score += 75 * mods.lobFreq;
+            }
             if (score > bestScore) {
               bestScore = score;
               bestMate = m;
+              bestLaneBlocked = minLaneOpp < 26;
             }
           }
-          const err = (1 - pasN) * 44 + (1 - ovrN) * 18 + (underPressure ? 10 * (1 - pasN) : 0);
-          const leadFactor = 0.08 + visN * 0.16;
+
+          const targetDist = Math.hypot(bestMate.x - dot.x, bestMate.y - dot.y);
+          const forwardGain = (bestMate.x - dot.x) * attackDir;
+          const lobChance = Math.min(0.65, ((bestLaneBlocked ? 0.28 : 0.08) + visN * 0.14) * mods.lobFreq);
+          const isLobPass = targetDist > 165 && forwardGain > 45 && rng() < lobChance;
+
+          const err = (1 - Math.min(1, pasN)) * 40 + (1 - ovrN) * 16 + (underPressure ? 10 * (1 - Math.min(1, pasN)) : 0);
+          const leadFactor = isLobPass ? (0.14 + visN * 0.18) : (0.08 + visN * 0.15);
           const pdx = bestMate.x + bestMate.vx * leadFactor + (rng() - 0.5) * err - dot.x;
           const pdy = bestMate.y + bestMate.vy * leadFactor + (rng() - 0.5) * err - dot.y;
           const pLen = Math.hypot(pdx, pdy) || 1;
-          const passSpeed = Math.min(460, 215 + pasN * 55 + pLen * 0.78);
+          const passSpeed = isLobPass
+            ? Math.min(460, 250 + pasN * 60 + pLen * 0.55)
+            : Math.min(445, 210 + pasN * 52 + pLen * 0.74);
+
           ball.ownerId = null;
           ball.vx = (pdx / pLen) * passSpeed;
           ball.vy = (pdy / pLen) * passSpeed;
-          ball.vz = pLen > 260 ? 85 : 6;
-          ball.kickCooldown = 0.25;
+          ball.vz = isLobPass ? (160 + rng() * 48) : (pLen > 270 ? 78 : 6);
+          ball.kickCooldown = 0.26;
           state.passTargetId = bestMate.id;
-          if (dot.team === 'home') state.homePasses = (state.homePasses || 0) + 1;
-          else state.awayPasses = (state.awayPasses || 0) + 1;
-          events.push(`PASS_${dot.team.toUpperCase()}`);
+          if (dot.team === 'home') {
+            state.homePasses = (state.homePasses || 0) + 1;
+            if (isLobPass) state.homeLobs = (state.homeLobs || 0) + 1;
+          } else {
+            state.awayPasses = (state.awayPasses || 0) + 1;
+            if (isLobPass) state.awayLobs = (state.awayLobs || 0) + 1;
+          }
+          events.push(isLobPass ? `LOB_PASS_${dot.team.toUpperCase()}:${dot.name}` : `PASS_${dot.team.toUpperCase()}`);
         }
       }
     }
@@ -1365,6 +1802,7 @@ export function resetKickoff(state: SimMatchState, kickingTeam: 'home' | 'away' 
   state.carryTime = 0;
   state.passTargetId = null;
   state.shotInFlight = null;
+  state.gkHoldTimer = 0;
 
   let taker: PitchDot | null = null;
   for (const d of dots) {
@@ -1378,6 +1816,8 @@ export function resetKickoff(state: SimMatchState, kickingTeam: 'home' | 'away' 
     d.vx = 0;
     d.vy = 0;
     d.diveTimer = 0;
+    d.dribbleCD = 0;
+    d.tackleCD = 0;
     if (!d.redCarded && d.team === kickingTeam && d.role === 'FWD') {
       taker = d;
     }

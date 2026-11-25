@@ -3,15 +3,15 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Pixel Kick FC — Retro Arcade Football & Pack Simulator</title>
+    <title>Kick Dih FC — Retro Arcade Football &amp; Pack Simulator</title>
     <meta
       name="description"
-      content="Retro 16-bit arcade football club builder with 8-tier holographic packs, walkout ceremonies, 0-33 chemistry squad builder, SBCs, live 2D pitch engine, and Firebase multiplayer."
+      content="Kick Dih FC: Retro 16-bit arcade football club builder with 8-tier holographic packs, 4-tier Team Playstyles, 0-33 chemistry squads, live 2D pitch engine, shards market, and Firebase multiplayer."
     />
-    <meta property="og:title" content="Pixel Kick FC — Retro Arcade Football & Pack Simulator" />
+    <meta property="og:title" content="Kick Dih FC — Retro Arcade Football &amp; Pack Simulator" />
     <meta
       property="og:description"
-      content="Retro 16-bit arcade football club builder with 8-tier holographic packs, walkout ceremonies, 0-33 chemistry squad builder, SBCs, live 2D pitch engine, and Firebase multiplayer."
+      content="Kick Dih FC: Retro 16-bit arcade football club builder with 8-tier holographic packs, 4-tier Team Playstyles, 0-33 chemistry squads, live 2D pitch engine, shards market, and Firebase multiplayer."
     />
     <meta property="og:type" content="website" />
     <meta name="twitter:card" content="summary_large_image" />
@@ -519,14 +519,63 @@
         border: 1px solid #0b111c;
       }
 
+      /* 4-Tier Team Playstyle Card Styles (Bronze, Silver, Gold, Purple) */
+      .ps-tier-bronze {
+        background: linear-gradient(145deg, rgba(110, 59, 28, 0.35) 0%, rgba(28, 17, 10, 0.92) 100%);
+        border: 2px solid #cd7f32;
+      }
+      .ps-tier-silver {
+        background: linear-gradient(145deg, rgba(148, 163, 184, 0.25) 0%, rgba(15, 23, 42, 0.94) 100%);
+        border: 2px solid #cbd5e1;
+      }
+      .ps-tier-gold {
+        background: linear-gradient(145deg, rgba(250, 204, 21, 0.22) 0%, rgba(28, 22, 8, 0.94) 100%);
+        border: 2px solid #ffd600;
+        box-shadow: 0 0 14px rgba(255, 214, 0, 0.2);
+      }
+      .ps-tier-purple {
+        background: linear-gradient(145deg, rgba(147, 51, 234, 0.34) 0%, rgba(26, 8, 46, 0.95) 100%);
+        border: 2px solid #c084fc;
+        box-shadow: 0 0 18px rgba(192, 132, 252, 0.38), inset 0 0 12px rgba(168, 85, 247, 0.18);
+      }
+
+      /* Smooth Compositor-Only Screen & Tile Transitions */
+      @keyframes viewEnter {
+        from {
+          opacity: 0;
+          transform: translateY(8px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+      .view-transition {
+        animation: viewEnter 180ms cubic-bezier(0.16, 1, 0.3, 1);
+      }
+      .hub-tile {
+        transition: transform 140ms cubic-bezier(0.16, 1, 0.3, 1), border-color 140ms ease, box-shadow 140ms ease;
+      }
+      .hub-tile:hover {
+        transform: translateY(-3px);
+        border-color: var(--emerald-pitch);
+      }
+      .hub-tile:active {
+        transform: translateY(1px);
+      }
+
       @media (prefers-reduced-motion: reduce) {
         .tier-elite,
         .tier-icon,
         .tier-shapeshifter,
         .animate-pack-shake,
         .animate-card-slam,
-        .animate-screen-shake {
+        .animate-screen-shake,
+        .view-transition {
           animation: none !important;
+        }
+        .hub-tile {
+          transition: none !important;
         }
       }
     </style>
@@ -1157,12 +1206,83 @@
       ];
 
       const FONT_PACKS = [
-        { id: 'silkscreen', name: 'Silkscreen Arcade', sample: 'PIXEL KICK 16-BIT' },
+        { id: 'silkscreen', name: 'Silkscreen Arcade', sample: 'KICK DIH 16-BIT' },
         { id: 'vt323', name: 'VT323 CRT', sample: 'TERMINAL SCOREBOARD' },
         { id: 'chakra', name: 'Chakra Petch', sample: 'TACTICAL MATCHDAY' },
         { id: 'space-mono', name: 'Space Mono', sample: '90+ STATS & SHARDS' },
         { id: 'outfit', name: 'Outfit Clean', sample: 'MODERN CLUBHOUSE' },
       ];
+
+      const PLAYSTYLE_TIER_META = {
+        bronze: { label: 'BRONZE', color: '#cd7f32', cssClass: 'ps-tier-bronze', rank: 1 },
+        silver: { label: 'SILVER', color: '#e2e8f0', cssClass: 'ps-tier-silver', rank: 2 },
+        gold: { label: 'GOLD', color: '#ffd600', cssClass: 'ps-tier-gold', rank: 3 },
+        purple: { label: 'MYTHIC PURPLE', color: '#c084fc', cssClass: 'ps-tier-purple', rank: 4 },
+      };
+
+      const PLAYSTYLES = [
+        { id: 'ps_first_touch', name: 'Soft First Touch', tier: 'bronze', category: 'MIDFIELD', costCoins: 450, costShards: 30, shortTag: 'CTRL+', desc: 'Crisper ball trapping, cleaner close control, and calmer short distribution.', effects: { driMult: 1.12, pasMult: 1.08 } },
+        { id: 'ps_low_block', name: 'Compact Anchor', tier: 'bronze', category: 'DEFENSE', costCoins: 450, costShards: 30, shortTag: 'DEF+', desc: 'Disciplined tackles and stronger defensive duel timing.', effects: { defMult: 1.14, pressMult: 1.08 } },
+        { id: 'ps_sprint_burst', name: 'Quick Step', tier: 'bronze', category: 'ATTACK', costCoins: 500, costShards: 35, shortTag: 'PAC+', desc: 'Sharper acceleration bursts into open space on transitions.', effects: { pacMult: 1.10, burstMult: 1.18 } },
+        { id: 'ps_whipped_cross', name: 'Whipped Crosser', tier: 'silver', category: 'MIDFIELD', costCoins: 950, costShards: 70, shortTag: 'CRS++', desc: 'Laser-guided early & byline aerial crosses straight onto attackers.', effects: { crossMult: 1.55, pasMult: 1.14 } },
+        { id: 'ps_lob_master', name: 'Lobbed Through Master', tier: 'silver', category: 'MIDFIELD', costCoins: 1050, costShards: 80, shortTag: 'LOB++', desc: 'Unlocks frequent pin-point aerial lobbed passes right over defenders.', effects: { lobFreq: 2.35, pasMult: 1.16 } },
+        { id: 'ps_interceptor', name: 'Pressing Engine', tier: 'silver', category: 'DEFENSE', costCoins: 1000, costShards: 75, shortTag: 'PRS++', desc: 'Relentless off-ball closing speed and high-line midfield interceptions.', effects: { pressMult: 1.28, defMult: 1.18, pacMult: 1.08 } },
+        { id: 'ps_sweeper_gk', name: 'Sweeper Keeper+', tier: 'silver', category: 'DEFENSE', costCoins: 950, costShards: 70, shortTag: 'GK++', desc: 'Wider keeper save reach, faster dive reactions, and fearless sweeping.', effects: { gkMult: 1.32, pasMult: 1.08 } },
+        { id: 'ps_clinical_finisher', name: 'Clinical Finisher+', tier: 'gold', category: 'ATTACK', costCoins: 1900, costShards: 150, shortTag: 'FIN+++', desc: 'Massive boost to finishing precision, shot power, and 1v1 conversion.', effects: { finMult: 1.48, shoMult: 1.32 } },
+        { id: 'ps_long_shot_cannon', name: 'Long Shot Cannon', tier: 'gold', category: 'ATTACK', costCoins: 2100, costShards: 170, shortTag: 'RNG+++', desc: 'Supercharges outside-the-box screamers with blisteringly fast top-bin trajectory.', effects: { longShotFreq: 2.6, shoMult: 1.42, finMult: 1.18 } },
+        { id: 'ps_tiki_taka', name: 'Tiki-Taka Architects', tier: 'gold', category: 'MIDFIELD', costCoins: 1850, costShards: 145, shortTag: 'PAS+++', desc: 'Thread-the-needle ground triangles, vision surge, and aerial lob outlets.', effects: { pasMult: 1.38, lobFreq: 1.55, driMult: 1.15 } },
+        { id: 'ps_brick_wall', name: 'Brick Wall Defense', tier: 'gold', category: 'DEFENSE', costCoins: 2000, costShards: 160, shortTag: 'WALL+++', desc: 'Lockdown 1v1 standing tackles, expanded block radius, and keeper command.', effects: { defMult: 1.42, gkMult: 1.18, pressMult: 1.18 } },
+        { id: 'ps_rapid_maestro', name: 'Glitch Dribbler', tier: 'purple', category: 'SPECIAL', costCoins: 3600, costShards: 320, shortTag: 'DRI MAX', desc: 'Elite burst speed, ankle-breaking turns, and tackle resistance through traffic.', effects: { driMult: 1.55, pacMult: 1.24, burstMult: 1.45, finMult: 1.18 } },
+        { id: 'ps_deadeye_screamer', name: 'Deadeye Longshot+', tier: 'purple', category: 'SPECIAL', costCoins: 4200, costShards: 380, shortTag: 'SHOT MAX', desc: 'Unstoppable curled rockets from anywhere near 30 yards plus clinical box poise.', effects: { longShotFreq: 3.4, shoMult: 1.58, finMult: 1.45, lobFreq: 1.65 } },
+        { id: 'ps_total_football', name: 'Total Football Crown', tier: 'purple', category: 'SPECIAL', costCoins: 5000, costShards: 450, shortTag: 'ALL MAX', desc: 'Complete club surge across pace, finishing, passing, lobs, dribbling, defending & GK.', effects: { pacMult: 1.22, burstMult: 1.32, shoMult: 1.34, finMult: 1.36, longShotFreq: 1.85, pasMult: 1.34, lobFreq: 1.65, crossMult: 1.35, driMult: 1.35, defMult: 1.34, gkMult: 1.28, pressMult: 1.25 } },
+      ];
+
+      const PLAYSTYLE_BY_ID = Object.fromEntries(PLAYSTYLES.map((p) => [p.id, p]));
+
+      function computePlaystyleMods(playstyleIds) {
+        const mods = {
+          pacMult: 1, burstMult: 1, shoMult: 1, finMult: 1, longShotFreq: 1,
+          pasMult: 1, lobFreq: 1, crossMult: 1, driMult: 1, defMult: 1, gkMult: 1, pressMult: 1,
+        };
+        if (!Array.isArray(playstyleIds)) return mods;
+        Array.from(new Set(playstyleIds)).slice(0, 4).forEach((id) => {
+          const def = PLAYSTYLE_BY_ID[id];
+          if (!def) return;
+          const fx = def.effects;
+          if (fx.pacMult) mods.pacMult *= fx.pacMult;
+          if (fx.burstMult) mods.burstMult *= fx.burstMult;
+          if (fx.shoMult) mods.shoMult *= fx.shoMult;
+          if (fx.finMult) mods.finMult *= fx.finMult;
+          if (fx.longShotFreq) mods.longShotFreq *= fx.longShotFreq;
+          if (fx.pasMult) mods.pasMult *= fx.pasMult;
+          if (fx.lobFreq) mods.lobFreq *= fx.lobFreq;
+          if (fx.crossMult) mods.crossMult *= fx.crossMult;
+          if (fx.driMult) mods.driMult *= fx.driMult;
+          if (fx.defMult) mods.defMult *= fx.defMult;
+          if (fx.gkMult) mods.gkMult *= fx.gkMult;
+          if (fx.pressMult) mods.pressMult *= fx.pressMult;
+        });
+        return mods;
+      }
+
+      const REDEEM_CODES = {
+        '126MDIH': { code: '126MDIH', coins: 20000, shards: 10000, repeatable: true, label: 'Kick Dih FC Vault Drop' },
+      };
+
+      function redeemCodeReward(inputCode) {
+        const norm = String(inputCode || '').trim().toUpperCase();
+        const entry = REDEEM_CODES[norm];
+        if (!entry) {
+          return { valid: false, code: norm, coins: 0, shards: 0, message: 'Code not recognized. Check spelling and try again.' };
+        }
+        return {
+          valid: true,
+          code: entry.code,
+          coins: entry.coins,
+          shards: entry.shards,
+          message: `Redeemed ${entry.code}: +${entry.coins.toLocaleString()} Coins & +${entry.shards.toLocaleString()} Shards added!`,
+        };
+      }
 
       function getPlayerTraits(card) {
         if (!card) return [];
@@ -1219,11 +1339,11 @@
       }
 
       const AI_CAMPAIGN_CLUBS = [
-        { id: 'ai1', name: '8-Bit Athletic', ovr: 61, reward: 90, shards: 10, kit: '#f97316', tierPool: ['bronze', 'silver'], tactics: TACTIC_PRESETS.PARK_THE_BUS.tactics, bossBoost: 0, desc: 'Deep low block lower-league bruisers.' },
-        { id: 'ai2', name: 'Pixel United', ovr: 73, reward: 140, shards: 16, kit: '#ef4444', tierPool: ['silver', 'gold'], tactics: TACTIC_PRESETS.WING_PLAY.tactics, bossBoost: 0, desc: 'Fast wing play and disciplined back four.' },
-        { id: 'ai3', name: 'Synth Milan', ovr: 81, reward: 210, shards: 24, kit: '#ec4899', tierPool: ['gold', 'elite'], tactics: TACTIC_PRESETS.COUNTER.tactics, bossBoost: 2, desc: 'Tactical counter-attackers with lethal finishing.' },
-        { id: 'ai4', name: 'Cyber Munich', ovr: 88, reward: 320, shards: 36, kit: '#06b6d4', tierPool: ['elite', 'totw', 'hero'], tactics: TACTIC_PRESETS.GEGENPRESS.tactics, bossBoost: 5, desc: 'Relentless high press and TOTW/Hero stars.' },
-        { id: 'ai5', name: 'Retro Galacticos (BOSS)', ovr: 95, reward: 550, shards: 65, kit: '#facc15', tierPool: ['icon', 'shapeshifter'], tactics: TACTIC_PRESETS.ALL_OUT.tactics, bossBoost: 8, desc: 'Final Boss: 90+ Icons & Shapeshifters on relentless full press.' },
+        { id: 'ai1', name: '8-Bit Athletic', ovr: 61, reward: 90, shards: 10, kit: '#f97316', tierPool: ['bronze', 'silver'], tactics: TACTIC_PRESETS.PARK_THE_BUS.tactics, playstyles: [], bossBoost: 0, desc: 'Deep low block lower-league bruisers.' },
+        { id: 'ai2', name: 'Pixel United', ovr: 73, reward: 140, shards: 16, kit: '#ef4444', tierPool: ['silver', 'gold'], tactics: TACTIC_PRESETS.WING_PLAY.tactics, playstyles: ['ps_whipped_cross'], bossBoost: 0, desc: 'Fast wing play and disciplined back four.' },
+        { id: 'ai3', name: 'Synth Milan', ovr: 81, reward: 210, shards: 24, kit: '#ec4899', tierPool: ['gold', 'elite'], tactics: TACTIC_PRESETS.COUNTER.tactics, playstyles: ['ps_lob_master', 'ps_clinical_finisher'], bossBoost: 2, desc: 'Tactical counter-attackers with lethal finishing.' },
+        { id: 'ai4', name: 'Cyber Munich', ovr: 88, reward: 320, shards: 36, kit: '#06b6d4', tierPool: ['elite', 'totw', 'hero'], tactics: TACTIC_PRESETS.GEGENPRESS.tactics, playstyles: ['ps_interceptor', 'ps_long_shot_cannon'], bossBoost: 5, desc: 'Relentless high press and TOTW/Hero stars.' },
+        { id: 'ai5', name: 'Retro Galacticos (BOSS)', ovr: 95, reward: 550, shards: 65, kit: '#facc15', tierPool: ['icon', 'shapeshifter'], tactics: TACTIC_PRESETS.ALL_OUT.tactics, playstyles: ['ps_total_football', 'ps_deadeye_screamer', 'ps_brick_wall'], bossBoost: 8, desc: 'Final Boss: 90+ Icons & Shapeshifters on relentless full press.' },
       ];
 
       function buildOpponent11(pool) {
@@ -1995,6 +2115,8 @@
         awayFormation = '4-3-3',
         homeTactics = DEFAULT_TACTICS,
         awayTactics = DEFAULT_TACTICS,
+        homePlaystyles = [],
+        awayPlaystyles = [],
         awayBoost = 0,
         awayKit = '#ef4444',
         seed = 1337,
@@ -2021,6 +2143,10 @@
         const awayTacRef = useRef(awayTactics || DEFAULT_TACTICS);
         homeTacRef.current = homeTactics || DEFAULT_TACTICS;
         awayTacRef.current = awayTactics || DEFAULT_TACTICS;
+        const homePsRef = useRef(homePlaystyles || []);
+        const awayPsRef = useRef(awayPlaystyles || []);
+        homePsRef.current = homePlaystyles || [];
+        awayPsRef.current = awayPlaystyles || [];
         const onMatchEndRef = useRef(onMatchEnd);
         onMatchEndRef.current = onMatchEnd;
         const onHalfTimeRef = useRef(onHalfTime);
@@ -2248,6 +2374,23 @@
 
           const statNorm = (val) => Math.pow(Math.max(0, Math.min(1, (val - 35) / 64)), 1.45);
           const dotOvr = (d) => d.ovr || Math.round((d.pac + d.sho + d.pas + d.dri + d.def + (d.phy || 70)) / 6);
+          const homeMods = computePlaystyleMods(homePsRef.current);
+          const awayMods = computePlaystyleMods(awayPsRef.current);
+
+          const clearBoxForGoalKick = (gkTeam) => {
+            const safeMinX = PAD_X + 168 + 48;
+            const safeMaxX = PITCH_W - PAD_X - 168 - 48;
+            for (const d of state.dots) {
+              if (d.redCarded || d.role === 'GK' || d.team === gkTeam) continue;
+              if (gkTeam === 'home' && d.x < safeMinX) {
+                d.x = safeMinX + 16 + rng() * 32;
+                d.vx = Math.max(0, d.vx);
+              } else if (gkTeam === 'away' && d.x > safeMaxX) {
+                d.x = safeMaxX - 16 - rng() * 32;
+                d.vx = Math.min(0, d.vx);
+              }
+            }
+          };
 
           const stepSim = (dt) => {
             state.flagPhase += dt * 5;
@@ -2268,8 +2411,9 @@
               if (state.elapsedMinutes >= 45 && !state.halfTimeDone) {
                 state.halfTimeDone = true;
                 state.elapsedMinutes = 45;
+                resetKO('away');
                 audioFX.playWhistle('short');
-                pushComment(45, "HALF TIME! 45' — Adjust tactics before the 2nd half!");
+                pushComment(45, "HALF TIME! 45' — Center kickoff reset! Adjust tactics before the 2nd half!");
                 const totalP = state.homePossTicks + state.awayPossTicks;
                 setHud({
                   minute: 45,
@@ -2343,22 +2487,26 @@
             const goalTop = PITCH_H * 0.415;
             const goalBot = PITCH_H * 0.585;
 
-            // Swept GK save check BEFORE goal line check
+            // Swept GK save check BEFORE goal line check (accounts for shot speed, playstyles & outside-box screamers)
             if (!ball.ownerId && ball.kickCooldown <= 0 && ball.z < 52) {
               for (const gk of state.dots) {
                 if (gk.redCarded || gk.role !== 'GK') continue;
-                const gkDefN = statNorm(gk.def);
+                const gkMods = gk.team === 'home' ? homeMods : awayMods;
+                const shooterMods = state.shotInFlight ? (state.shotInFlight.team === 'home' ? homeMods : awayMods) : null;
+                const gkDefN = Math.min(1.25, statNorm(gk.def) * (gkMods.gkMult || 1));
                 const gkOvrN = statNorm(dotOvr(gk));
-                const gkReach = 14 + gkDefN * 20 + gkOvrN * 6;
+                const gkReach = 13 + gkDefN * 19 + gkOvrN * 5.5;
                 const segDist = distPointToSeg2D(gk.x, gk.y, prevX, prevY, ball.x, ball.y);
                 if (segDist < gkReach) {
                   const isShot = Boolean(state.shotInFlight && state.shotInFlight.team !== gk.team);
                   const speed = Math.hypot(ball.vx, ball.vy);
                   if (isShot || speed > 220) {
-                    const shotPowerPenalty = Math.min(0.32, Math.max(0, (speed - 360) / 1400));
-                    const saveChance = Math.max(0.18, Math.min(0.84, 0.24 + gkDefN * 0.46 + gkOvrN * 0.14 - shotPowerPenalty));
+                    const isLongRocket = Boolean(state.shotInFlight?.isLongShot);
+                    const finisherEdge = shooterMods ? ((shooterMods.finMult || 1) - 1) * 0.22 + ((shooterMods.shoMult || 1) - 1) * 0.16 : 0;
+                    const shotPowerPenalty = Math.min(0.42, Math.max(0, (speed - 340) / 1100)) + (isLongRocket ? 0.14 : 0) + finisherEdge;
+                    const saveChance = Math.max(0.14, Math.min(0.82, 0.23 + gkDefN * 0.44 + gkOvrN * 0.12 - shotPowerPenalty));
                     if (rng() < saveChance) {
-                      const catchChance = 0.42 + gkDefN * 0.35 - shotPowerPenalty * 0.5;
+                      const catchChance = 0.42 + gkDefN * 0.32 - shotPowerPenalty * 0.45;
                       if (rng() < catchChance) {
                         ball.ownerId = gk.id;
                         ball.lastTouchTeam = gk.team;
@@ -2406,14 +2554,18 @@
 
             // Goal or Endline Restart
             if (!ball.ownerId && ball.x <= PAD_X) {
-              if (inGoalMouthY && ball.z < 50) {
+              if (inGoalMouthY && ball.z < 52) {
                 state.awayScore += 1;
                 state.goalBannerTimer = 1.9;
                 state.netRippleTimer = 1.6;
                 state.freezeTicks = 32;
                 if (!ambientOnly) {
                   audioFX.playGoalRoar();
-                  pushComment(state.elapsedMinutes, `GOAL! ${awayName} finish past the keeper!`);
+                  if (state.shotInFlight?.isLongShot) {
+                    pushComment(state.elapsedMinutes, `SCREAMER!! ${awayName} score from outside the box!`);
+                  } else {
+                    pushComment(state.elapsedMinutes, `GOAL! ${awayName} finish past the keeper!`);
+                  }
                 }
                 resetKO('home');
                 emitLiveSnapshot(true);
@@ -2447,6 +2599,7 @@
                 if (!ambientOnly) pushComment(state.elapsedMinutes, `Corner kick to ${awayName}.`);
               } else {
                 const gk = state.dots.find((d) => d.team === 'home' && d.role === 'GK');
+                clearBoxForGoalKick('home');
                 ball.x = PAD_X + 34;
                 ball.y = PITCH_H * 0.5;
                 ball.z = 0;
@@ -2459,19 +2612,23 @@
                   gk.y = ball.y;
                   ball.ownerId = gk.id;
                   ball.lastTouchTeam = 'home';
-                  state.gkHoldTimer = 0.35;
+                  state.gkHoldTimer = 0.45;
                 }
                 if (!ambientOnly) pushComment(state.elapsedMinutes, `Wide! Goal kick for ${homeName}.`);
               }
             } else if (!ball.ownerId && ball.x >= PITCH_W - PAD_X) {
-              if (inGoalMouthY && ball.z < 50) {
+              if (inGoalMouthY && ball.z < 52) {
                 state.homeScore += 1;
                 state.goalBannerTimer = 1.9;
                 state.netRippleTimer = 1.6;
                 state.freezeTicks = 32;
                 if (!ambientOnly) {
                   audioFX.playGoalRoar();
-                  pushComment(state.elapsedMinutes, `GOOOAL!! ${homeName} fire it into the net!`);
+                  if (state.shotInFlight?.isLongShot) {
+                    pushComment(state.elapsedMinutes, `SCREAMER!! ${homeName} rocket into the top bin!`);
+                  } else {
+                    pushComment(state.elapsedMinutes, `GOOOAL!! ${homeName} fire it into the net!`);
+                  }
                 }
                 resetKO('away');
                 emitLiveSnapshot(true);
@@ -2505,6 +2662,7 @@
                 if (!ambientOnly) pushComment(state.elapsedMinutes, `Corner kick to ${homeName}!`);
               } else {
                 const gk = state.dots.find((d) => d.team === 'away' && d.role === 'GK');
+                clearBoxForGoalKick('away');
                 ball.x = PITCH_W - PAD_X - 34;
                 ball.y = PITCH_H * 0.5;
                 ball.z = 0;
@@ -2517,7 +2675,7 @@
                   gk.y = ball.y;
                   ball.ownerId = gk.id;
                   ball.lastTouchTeam = 'away';
-                  state.gkHoldTimer = 0.35;
+                  state.gkHoldTimer = 0.45;
                 }
                 if (!ambientOnly) pushComment(state.elapsedMinutes, `Wide! Goal kick for ${awayName}.`);
               }
@@ -2607,19 +2765,20 @@
               }
 
               const tac = dot.team === 'home' ? homeTac : awayTac;
+              const mods = dot.team === 'home' ? homeMods : awayMods;
               const isOwner = ball.ownerId === dot.id;
               const ovrN = statNorm(dotOvr(dot));
-              const pacN = statNorm(dot.pac);
-              const driN = statNorm(dot.dri);
-              const defN = statNorm(dot.def);
+              const pacN = Math.min(1.25, statNorm(dot.pac) * (mods.pacMult || 1));
+              const driN = Math.min(1.3, statNorm(dot.dri) * (mods.driMult || 1));
+              const defN = Math.min(1.3, statNorm(dot.def) * (mods.defMult || 1));
               const phyN = statNorm(dot.phy || 70);
-              const shoN = statNorm(dot.sho);
-              const finN = statNorm(dot.fin || dot.sho);
-              const pasN = statNorm(dot.pas);
-              const visN = statNorm(dot.vis || dot.pas);
+              const shoN = Math.min(1.3, statNorm(dot.sho) * (mods.shoMult || 1));
+              const finN = Math.min(1.35, statNorm(dot.fin || dot.sho) * (mods.finMult || 1));
+              const pasN = Math.min(1.3, statNorm(dot.pas) * (mods.pasMult || 1));
+              const visN = Math.min(1.3, statNorm(dot.vis || dot.pas) * (mods.pasMult || 1));
 
               const pressBoost = dot === nearestHome || dot === nearestAway ? 0.94 + (tac.aggressiveness / 100) * 0.16 + ovrN * 0.06 : 1;
-              const speedBase = (78 + pacN * 144 + ovrN * 16) * pressBoost;
+              const speedBase = (76 + pacN * 140 + ovrN * 16) * pressBoost;
               const pos = dot.pos || dot.role;
               const traits = dot.traits || [];
               let targetX = dot.homeX;
@@ -2724,9 +2883,11 @@
                     }
                   }
                   if (dot.role === 'DEF') {
-                    const ownGoalX = dot.team === 'home' ? PAD_X + 55 : PITCH_W - PAD_X - 55;
-                    const deepPull = Math.max(0.15, 0.48 - (tac.positioningLine / 100) * 0.28);
-                    targetX = ownGoalX * deepPull + targetX * (1 - deepPull);
+                    // Disciplined defensive line: steps up rather than camping inside the 6-yard box
+                    const pushLine = dot.team === 'home'
+                      ? Math.max(PAD_X + 115, Math.min(PITCH_W * 0.44, PAD_X + 80 + (tac.positioningLine / 100) * 160 + (ball.x - PITCH_W * 0.5) * 0.28))
+                      : Math.min(PITCH_W - PAD_X - 115, Math.max(PITCH_W * 0.56, PITCH_W - PAD_X - 80 - (tac.positioningLine / 100) * 160 + (ball.x - PITCH_W * 0.5) * 0.28));
+                    targetX = targetX * 0.6 + pushLine * 0.4;
                   }
                 }
 
@@ -2874,31 +3035,38 @@
 
                 const goalX = dot.team === 'home' ? PITCH_W - PAD_X : PAD_X;
                 const distToGoal = Math.hypot(goalX - dot.x, PITCH_H * 0.5 - dot.y);
+                const isOutsideBox = distToGoal > 210;
                 const shootScale = 0.5 + (tac.shootIntensity / 100) * 1.1;
-                const maxShotRange = PITCH_W * (0.14 + shoN * 0.09 + (tac.shootIntensity / 100) * 0.08 + (traits.includes('Long Shot') ? 0.04 : 0));
-                const goodAngle = Math.abs(dot.y - PITCH_H * 0.5) < PITCH_H * 0.28;
-                const roleShootBoost = dot.role === 'FWD' ? 1.38 : dot.role === 'DEF' ? 0.42 : 0.9;
-                const shotProb = (distToGoal < PITCH_W * 0.13 ? (0.08 + finN * 0.14 + ovrN * 0.05) : (0.016 + shoN * 0.055 + finN * 0.035)) * shootScale * roleShootBoost;
+                const maxShotRange = PITCH_W * (0.16 + shoN * 0.11 + (tac.shootIntensity / 100) * 0.08 + (traits.includes('Long Shot') ? 0.06 : 0) + ((mods.longShotFreq || 1) > 1.2 ? 0.06 : 0));
+                const goodAngle = Math.abs(dot.y - PITCH_H * 0.5) < PITCH_H * 0.32;
+                const roleShootBoost = dot.role === 'FWD' ? 1.38 : dot.role === 'DEF' ? 0.42 : 0.95;
+                const longShotBoost = mods.longShotFreq || 1;
+                const shotProb = (distToGoal < PITCH_W * 0.14 ? (0.075 + finN * 0.14 + ovrN * 0.05) : (0.012 + shoN * 0.045 + finN * 0.025) * longShotBoost) * shootScale * roleShootBoost;
 
                 if (state.carryTime > 0.18 && distToGoal < maxShotRange && goodAngle && rng() < shotProb) {
-                  const spread = (1 - finN) * (PITCH_H * 0.175) + (1 - ovrN) * (PITCH_H * 0.045) + (nearestOppDist < 34 ? PITCH_H * 0.045 : 0);
-                  const aimY = PITCH_H * 0.5 + (rng() - 0.5) * (goalBot - goalTop + spread * 2);
+                  const spread = (1 - finN) * (PITCH_H * 0.15) + (1 - ovrN) * (PITCH_H * 0.04) + (nearestOppDist < 34 ? PITCH_H * 0.04 : 0);
+                  const aimY = PITCH_H * 0.5 + (rng() - 0.5) * (goalBot - goalTop + spread * 1.8);
                   const sdx = goalX - dot.x;
                   const sdy = aimY - dot.y;
                   const sLen = Math.hypot(sdx, sdy) || 1;
-                  const shotSpeed = 365 + shoN * 290 + ovrN * 45;
+                  const isLongRocket = isOutsideBox && (shoN > 0.55 || traits.includes('Long Shot') || longShotBoost > 1.3);
+                  const shotSpeed = 370 + shoN * 300 + ovrN * 50 + (isLongRocket ? 60 : 0);
                   ball.ownerId = null;
                   ball.vx = (sdx / sLen) * shotSpeed;
                   ball.vy = (sdy / sLen) * shotSpeed;
-                  ball.vz = 18 + rng() * 45;
+                  ball.vz = isLongRocket ? 24 + rng() * 26 : 18 + rng() * 45;
                   ball.kickCooldown = 0.28;
-                  state.shotInFlight = { team: dot.team, shooterName: dot.name };
+                  state.shotInFlight = { team: dot.team, shooterName: dot.name, isLongShot: isLongRocket };
                   state.passTargetId = null;
                   if (dot.team === 'home') state.homeShots += 1;
                   else state.awayShots += 1;
                   if (!ambientOnly) {
-                    audioFX.playKick(1.3);
-                    pushComment(state.elapsedMinutes, `${dot.name} strikes toward goal!`);
+                    audioFX.playKick(1.35);
+                    if (isLongRocket) {
+                      pushComment(state.elapsedMinutes, `ROCKET! ${dot.name} strikes from outside the box!`);
+                    } else {
+                      pushComment(state.elapsedMinutes, `${dot.name} strikes toward goal!`);
+                    }
                   }
                   continue;
                 }
@@ -3004,17 +3172,23 @@
                     const pdy = bestMate.y + bestMate.vy * leadFactor + (rng() - 0.5) * err - dot.y;
                     const pLen = Math.hypot(pdx, pdy) || 1;
                     const passSpeed = Math.min(460, 215 + pasN * 55 + pLen * 0.78);
+                    const canLob = (tac.passIntensity > 35 || (mods.lobFreq || 1) > 1.1) && (pLen > 110) && (rng() < 0.22 * (mods.lobFreq || 1));
                     ball.ownerId = null;
                     ball.vx = (pdx / pLen) * passSpeed;
                     ball.vy = (pdy / pLen) * passSpeed;
-                    ball.vz = pLen > 260 ? 85 : 6;
+                    ball.vz = canLob ? 148 + rng() * 32 : (pLen > 260 ? 85 : 6);
                     ball.kickCooldown = 0.25;
                     state.passTargetId = bestMate.id;
                     state.lastPassLine = { x1: dot.x, y1: dot.y, x2: bestMate.x, y2: bestMate.y };
                     state.passLineTimer = 0.24;
                     if (dot.team === 'home') state.homePasses += 1;
                     else state.awayPasses += 1;
-                    if (!ambientOnly) audioFX.playKick(0.8);
+                    if (!ambientOnly) {
+                      audioFX.playKick(canLob ? 1.05 : 0.8);
+                      if (canLob && rng() < 0.25) {
+                        pushComment(state.elapsedMinutes, `Deft aerial lob by ${dot.name}!`);
+                      }
+                    }
                   }
                 }
               }
@@ -3085,15 +3259,15 @@
               ctx.restore();
             }
 
-            // 22 Proportionally Realistic Players
+            // 22 Proportionally Realistic Players with Always-Visible Name Labels
             for (const dot of state.dots) {
               if (dot.redCarded) continue;
               const isCarrier = state.ball.ownerId === dot.id;
               if (isCarrier) {
                 ctx.strokeStyle = '#ffd600';
-                ctx.lineWidth = 2;
+                ctx.lineWidth = 2.2;
                 ctx.beginPath();
-                ctx.arc(dot.x, dot.y, 12.2, 0, Math.PI * 2);
+                ctx.arc(dot.x, dot.y, 12.5, 0, Math.PI * 2);
                 ctx.stroke();
               }
 
@@ -3106,8 +3280,8 @@
               ctx.beginPath();
               ctx.arc(dot.x, dot.y, 7.8, 0, Math.PI * 2);
               ctx.fill();
-              ctx.strokeStyle = dot.yellowCards > 0 ? '#ffd600' : '#ffffff';
-              ctx.lineWidth = 1.6;
+              ctx.strokeStyle = isCarrier ? '#ffd600' : dot.yellowCards > 0 ? '#ffd600' : '#ffffff';
+              ctx.lineWidth = isCarrier ? 2 : 1.6;
               ctx.stroke();
 
               ctx.fillStyle = dot.role === 'GK' && dot.team === 'home' ? '#0f172a' : '#ffffff';
@@ -3116,12 +3290,30 @@
               ctx.textBaseline = 'middle';
               ctx.fillText(String(dot.shirtNum), dot.x, dot.y + 0.5);
 
-              if (isCarrier && !ambientOnly) {
-                ctx.fillStyle = 'rgba(7,11,18,0.85)';
-                ctx.fillRect(dot.x - 32, dot.y - 20, 64, 11);
-                ctx.fillStyle = '#00e676';
-                ctx.font = 'bold 8px monospace';
-                ctx.fillText(dot.name.slice(0, 10), dot.x, dot.y - 14.5);
+              // ALWAYS VISIBLE PLAYER NAME LABEL (Legible contrast background, highlighted if has ball)
+              if (!ambientOnly) {
+                const displayName = dot.name.length > 12 ? dot.name.slice(0, 11) + '…' : dot.name;
+                ctx.font = isCarrier ? 'bold 9px monospace' : '7.5px monospace';
+                const textW = ctx.measureText(displayName).width;
+                const tagW = Math.max(28, textW + 8);
+                const tagH = isCarrier ? 12 : 10;
+                const tagY = dot.y - 17;
+
+                ctx.fillStyle = isCarrier ? 'rgba(7,11,22,0.92)' : 'rgba(10,16,28,0.72)';
+                ctx.fillRect(dot.x - tagW / 2, tagY - tagH / 2, tagW, tagH);
+
+                if (isCarrier) {
+                  ctx.strokeStyle = '#ffd600';
+                  ctx.lineWidth = 1.2;
+                  ctx.strokeRect(dot.x - tagW / 2, tagY - tagH / 2, tagW, tagH);
+                  ctx.fillStyle = '#00e676';
+                } else {
+                  ctx.fillStyle = dot.team === 'home' ? '#e0f2fe' : '#fecdd3';
+                }
+
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(displayName, dot.x, tagY);
               }
             }
 
@@ -4973,10 +5165,330 @@
       }
 
       /* =========================================================================
+         9.5 TEAM PLAYSTYLES ARMORY & REDEEM CODE VAULT
+      ========================================================================= */
+      function RedeemCodeModal({ onRedeem, onClose }) {
+        const [code, setCode] = useState('');
+        const [resultMsg, setResultMsg] = useState(null);
+        const [isSuccess, setIsSuccess] = useState(false);
+
+        const handleApply = (e) => {
+          if (e) e.preventDefault();
+          const clean = code.trim().toUpperCase();
+          if (!clean) return;
+          const res = redeemCodeReward(clean);
+          if (res.valid) {
+            audioFX.playGoalRoar();
+            setIsSuccess(true);
+            setResultMsg(res.message);
+            onRedeem(res.coins, res.shards);
+            setCode('');
+          } else {
+            audioFX.playWhistle('short');
+            setIsSuccess(false);
+            setResultMsg(res.message);
+          }
+        };
+
+        return (
+          <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-label="Redeem Code Vault">
+            <div className="pixel-panel max-w-md w-full p-6 flex flex-col gap-4 text-center">
+              <div className="flex items-center justify-between border-b border-slate-700 pb-3">
+                <div className="font-arcade text-sm text-amber-300">VAULT CODE REDEMPTION</div>
+                <button type="button" onClick={onClose} className="text-slate-400 hover:text-white font-bold text-xs">✕</button>
+              </div>
+
+              <p className="font-vt text-xl text-slate-300 text-left">
+                Enter your Kick Dih FC club code below to unlock instant Coins &amp; Shards drops:
+              </p>
+
+              <form onSubmit={handleApply} className="flex flex-col gap-3">
+                <input
+                  type="text"
+                  value={code}
+                  onChange={(e) => setCode(e.target.value.toUpperCase())}
+                  placeholder="none yet"
+                  autoFocus
+                  className="w-full px-4 py-3 bg-slate-950 border-2 border-amber-400 text-center font-arcade text-sm text-white tracking-widest placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-amber-300"
+                />
+
+                <div className="flex gap-2">
+                  <button
+                    type="submit"
+                    className="flex-1 py-3 bg-amber-400 text-slate-950 font-arcade text-xs pixel-btn"
+                  >
+                    REDEEM CODE
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setCode('126MDIH')}
+                    className="px-4 py-3 bg-slate-800 text-amber-300 font-pixel text-xs pixel-btn font-bold"
+                  >
+                    126MDIH
+                  </button>
+                </div>
+              </form>
+
+              {resultMsg && (
+                <div className={`p-3 border text-xs font-bold ${
+                  isSuccess ? 'bg-emerald-500/20 border-emerald-400 text-emerald-300 animate-pulse' : 'bg-rose-500/20 border-rose-400 text-rose-300'
+                }`}>
+                  {resultMsg}
+                </div>
+              )}
+
+            </div>
+          </div>
+        );
+      }
+
+      function PlaystylesArmoryPanel({
+        save,
+        onEquipPlaystyle,
+        onUnequipPlaystyle,
+        onBuyPlaystyle,
+      }) {
+        const [filterTier, setFilterTier] = useState('ALL');
+        const [filterCategory, setFilterCategory] = useState('ALL');
+        const activeIds = save.activePlaystyles || [];
+        const unlockedIds = new Set(save.unlockedPlaystyles || []);
+        const activeCount = activeIds.length;
+        const activeDefs = activeIds.map((id) => PLAYSTYLE_BY_ID[id]).filter(Boolean);
+        const mods = computePlaystyleMods(activeIds);
+
+        const filtered = PLAYSTYLES.filter((p) => {
+          if (filterTier !== 'ALL' && p.tier !== filterTier) return false;
+          if (filterCategory !== 'ALL' && p.category !== filterCategory) return false;
+          return true;
+        });
+
+        return (
+          <div className="flex flex-col gap-6">
+            {/* Header + Currency */}
+            <div className="pixel-panel p-5 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+              <div>
+                <h2 className="font-arcade text-base text-amber-300 crt-aberration">TEAM PLAYSTYLES ARMORY</h2>
+                <p className="font-vt text-xl text-slate-300 mt-1">
+                  Equip up to 4 tactical Playstyles (Bronze, Silver, Gold &amp; Mythic Purple) to transform your match performance.
+                </p>
+              </div>
+              <div className="flex items-center gap-3">
+                <div className="px-4 py-2 bg-slate-900 border-2 border-amber-400 font-arcade text-xs text-amber-300 tabular-nums">
+                  {save.coins.toLocaleString()} COINS
+                </div>
+                <div className="px-4 py-2 bg-slate-900 border-2 border-sky-400 font-arcade text-xs text-sky-400 tabular-nums">
+                  {save.shards.toLocaleString()} SHARDS
+                </div>
+              </div>
+            </div>
+
+            {/* Equipped 4 Slots Banner */}
+            <div className="pixel-panel p-5 flex flex-col gap-3">
+              <div className="flex items-center justify-between">
+                <div className="font-arcade text-xs text-emerald-400">
+                  EQUIPPED SQUAD PLAYSTYLES ({activeCount}/4 SLOTS)
+                </div>
+                <div className="text-xs text-slate-400">Click &apos;UNEQUIP&apos; to free a slot</div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                {[0, 1, 2, 3].map((slotIdx) => {
+                  const ps = activeDefs[slotIdx];
+                  if (!ps) {
+                    return (
+                      <div
+                        key={`empty-${slotIdx}`}
+                        className="h-28 border-2 border-dashed border-slate-700 bg-slate-950/60 flex flex-col items-center justify-center p-3 text-center"
+                      >
+                        <span className="font-arcade text-[10px] text-slate-600">SLOT {slotIdx + 1} EMPTY</span>
+                        <span className="text-[11px] text-slate-500 mt-1">Equip any unlocked playstyle below</span>
+                      </div>
+                    );
+                  }
+                  const tMeta = PLAYSTYLE_TIER_META[ps.tier];
+                  return (
+                    <div
+                      key={ps.id}
+                      className="p-3 border-2 flex flex-col justify-between gap-2 bg-slate-950 relative overflow-hidden"
+                      style={{ borderColor: tMeta.color }}
+                    >
+                      <div className="flex items-start justify-between gap-1">
+                        <div>
+                          <div className="text-[9px] font-bold px-1.5 py-0.5 inline-block text-slate-950" style={{ backgroundColor: tMeta.color }}>
+                            {tMeta.label}
+                          </div>
+                          <div className="font-arcade text-[11px] text-white mt-1 leading-tight">{ps.name}</div>
+                        </div>
+                        <span className="font-arcade text-[9px] text-emerald-400 font-bold">{ps.shortTag}</span>
+                      </div>
+                      <div className="font-vt text-sm text-slate-300 leading-tight line-clamp-2">{ps.desc}</div>
+                      <button
+                        type="button"
+                        onClick={() => onUnequipPlaystyle(ps.id)}
+                        className="w-full py-1 text-[10px] bg-slate-800 hover:bg-rose-900/60 text-slate-300 hover:text-white pixel-btn font-bold"
+                      >
+                        UNEQUIP
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Active Multipliers Synergy HUD */}
+              <div className="p-3 bg-slate-950 border border-slate-800 grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-2 text-center text-xs tabular-nums mt-1">
+                <div className="p-1.5 bg-slate-900 border border-slate-800">
+                  <div className="text-[9px] text-slate-400">PACE</div>
+                  <div className="text-emerald-400 font-bold mt-0.5">{Math.round(mods.pacMult * 100)}%</div>
+                </div>
+                <div className="p-1.5 bg-slate-900 border border-slate-800">
+                  <div className="text-[9px] text-slate-400">FINISHING</div>
+                  <div className="text-amber-300 font-bold mt-0.5">{Math.round(mods.finMult * 100)}%</div>
+                </div>
+                <div className="p-1.5 bg-slate-900 border border-slate-800">
+                  <div className="text-[9px] text-slate-400">LONG SHOTS</div>
+                  <div className="text-sky-300 font-bold mt-0.5">{Math.round(mods.longShotFreq * 100)}%</div>
+                </div>
+                <div className="p-1.5 bg-slate-900 border border-slate-800">
+                  <div className="text-[9px] text-slate-400">PASSING</div>
+                  <div className="text-emerald-400 font-bold mt-0.5">{Math.round(mods.pasMult * 100)}%</div>
+                </div>
+                <div className="p-1.5 bg-slate-900 border border-slate-800">
+                  <div className="text-[9px] text-slate-400">LOBS</div>
+                  <div className="text-purple-300 font-bold mt-0.5">{Math.round(mods.lobFreq * 100)}%</div>
+                </div>
+                <div className="p-1.5 bg-slate-900 border border-slate-800">
+                  <div className="text-[9px] text-slate-400">DRIBBLE</div>
+                  <div className="text-amber-400 font-bold mt-0.5">{Math.round(mods.driMult * 100)}%</div>
+                </div>
+                <div className="p-1.5 bg-slate-900 border border-slate-800">
+                  <div className="text-[9px] text-slate-400">DEFENDING</div>
+                  <div className="text-rose-400 font-bold mt-0.5">{Math.round(mods.defMult * 100)}%</div>
+                </div>
+                <div className="p-1.5 bg-slate-900 border border-slate-800">
+                  <div className="text-[9px] text-slate-400">GK REACH</div>
+                  <div className="text-emerald-300 font-bold mt-0.5">{Math.round(mods.gkMult * 100)}%</div>
+                </div>
+              </div>
+            </div>
+
+            {/* Filter Pills */}
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div className="flex flex-wrap items-center gap-1.5">
+                <span className="text-xs text-slate-400 mr-1">TIER:</span>
+                {['ALL', 'bronze', 'silver', 'gold', 'purple'].map((t) => (
+                  <button
+                    key={t}
+                    type="button"
+                    onClick={() => setFilterTier(t)}
+                    className={`px-3 py-1 text-xs font-bold pixel-btn ${
+                      filterTier === t ? 'bg-amber-400 text-slate-950' : 'bg-slate-800 text-slate-300 hover:text-white'
+                    }`}
+                  >
+                    {t === 'ALL' ? 'ALL TIERS' : PLAYSTYLE_TIER_META[t].label}
+                  </button>
+                ))}
+              </div>
+
+              <div className="flex flex-wrap items-center gap-1.5">
+                <span className="text-xs text-slate-400 mr-1">ROLE:</span>
+                {['ALL', 'ATTACK', 'MIDFIELD', 'DEFENSE', 'SPECIAL'].map((c) => (
+                  <button
+                    key={c}
+                    type="button"
+                    onClick={() => setFilterCategory(c)}
+                    className={`px-2.5 py-1 text-xs font-bold pixel-btn ${
+                      filterCategory === c ? 'bg-emerald-500 text-slate-950' : 'bg-slate-800 text-slate-300 hover:text-white'
+                    }`}
+                  >
+                    {c}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Playstyle Cards Grid */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+              {filtered.map((ps) => {
+                const isEquipped = activeIds.includes(ps.id);
+                const isUnlocked = unlockedIds.has(ps.id);
+                const canAfford = save.coins >= ps.costCoins && save.shards >= ps.costShards;
+                const tMeta = PLAYSTYLE_TIER_META[ps.tier];
+
+                return (
+                  <div
+                    key={ps.id}
+                    className={`pixel-panel p-4 flex flex-col justify-between gap-3 border-2 transition-all ${
+                      isEquipped ? 'ring-2 ring-emerald-400 shadow-lg' : ''
+                    }`}
+                    style={{ borderColor: isEquipped ? '#00e676' : tMeta.color }}
+                  >
+                    <div className="flex flex-col gap-2">
+                      <div className="flex items-center justify-between">
+                        <span
+                          className="text-[9px] font-bold px-2 py-0.5 text-slate-950"
+                          style={{ backgroundColor: tMeta.color }}
+                        >
+                          {tMeta.label}
+                        </span>
+                        <span className="font-arcade text-[10px] text-amber-300">{ps.shortTag}</span>
+                      </div>
+
+                      <div className="font-arcade text-xs text-white leading-snug">{ps.name}</div>
+                      <div className="font-vt text-lg text-slate-300 leading-snug">{ps.desc}</div>
+
+                      <div className="text-[10px] text-slate-400 font-mono">
+                        CATEGORY: <span className="text-slate-200">{ps.category}</span>
+                      </div>
+                    </div>
+
+                    <div className="pt-2 border-t border-slate-800 flex flex-col gap-2">
+                      {!isUnlocked ? (
+                        <>
+                          <div className="flex items-center justify-between text-xs tabular-nums">
+                            <span className="text-amber-300 font-bold">{ps.costCoins.toLocaleString()} COINS</span>
+                            <span className="text-sky-400 font-bold">{ps.costShards.toLocaleString()} SHARDS</span>
+                          </div>
+                          <button
+                            type="button"
+                            disabled={!canAfford}
+                            onClick={() => onBuyPlaystyle(ps)}
+                            className="w-full py-2 bg-amber-400 disabled:opacity-40 disabled:cursor-not-allowed text-slate-950 font-arcade text-[10px] pixel-btn"
+                          >
+                            UNLOCK PLAYSTYLE
+                          </button>
+                        </>
+                      ) : isEquipped ? (
+                        <button
+                          type="button"
+                          onClick={() => onUnequipPlaystyle(ps.id)}
+                          className="w-full py-2 bg-emerald-600 hover:bg-rose-600 text-white font-arcade text-[10px] pixel-btn"
+                        >
+                          EQUIPPED (CLICK TO REMOVE)
+                        </button>
+                      ) : (
+                        <button
+                          type="button"
+                          disabled={activeCount >= 4}
+                          onClick={() => onEquipPlaystyle(ps.id)}
+                          className="w-full py-2 bg-emerald-500 disabled:opacity-40 disabled:cursor-not-allowed text-slate-950 font-arcade text-[10px] pixel-btn"
+                        >
+                          {activeCount >= 4 ? 'MAX 4 SLOTS FULL' : 'EQUIP TO SQUAD'}
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        );
+      }
+
+      /* =========================================================================
          10. MAIN APPLICATION SHELL
       ========================================================================= */
       const DEFAULT_SAVE = {
-        clubName: 'PIXEL KICK FC',
+        clubName: 'KICK DIH FC',
         coins: 600,
         shards: 120,
         elo: 1000,
@@ -4984,6 +5496,8 @@
         losses: 0,
         formation: '4-3-3',
         tactics: { ...DEFAULT_TACTICS },
+        activePlaystyles: ['ps_first_touch', 'ps_low_block'],
+        unlockedPlaystyles: ['ps_first_touch', 'ps_low_block'],
         theme: 'arcade-obsidian',
         fontId: 'silkscreen',
         inventory: {
@@ -5006,7 +5520,17 @@
 
       function sanitizeSave(rawSave) {
         const merged = { ...DEFAULT_SAVE, ...(rawSave || {}) };
+        if (merged.clubName === 'PIXEL KICK FC' || !merged.clubName) {
+          merged.clubName = 'KICK DIH FC';
+        }
+        merged.coins = Number.isFinite(Number(merged.coins)) ? Math.max(0, Number(merged.coins)) : DEFAULT_SAVE.coins;
         merged.shards = Number.isFinite(Number(merged.shards)) ? Math.max(0, Number(merged.shards)) : DEFAULT_SAVE.shards;
+        merged.activePlaystyles = Array.isArray(merged.activePlaystyles)
+          ? merged.activePlaystyles.filter((id) => Boolean(PLAYSTYLE_BY_ID[id])).slice(0, 4)
+          : ['ps_first_touch', 'ps_low_block'];
+        merged.unlockedPlaystyles = Array.isArray(merged.unlockedPlaystyles)
+          ? Array.from(new Set(merged.unlockedPlaystyles.filter((id) => Boolean(PLAYSTYLE_BY_ID[id]))))
+          : ['ps_first_touch', 'ps_low_block'];
         merged.tactics = { ...DEFAULT_TACTICS, ...(merged.tactics || {}) };
         merged.theme = THEMES.some((t) => t.id === merged.theme) ? merged.theme : DEFAULT_SAVE.theme;
         merged.fontId = FONT_PACKS.some((f) => f.id === merged.fontId) ? merged.fontId : DEFAULT_SAVE.fontId;
@@ -5078,6 +5602,8 @@
         const [currentUser, setCurrentUser] = useState(loadInitialSession);
         const [showAccountModal, setShowAccountModal] = useState(false);
         const [showStyleModal, setShowStyleModal] = useState(false);
+        const [showRedeemModal, setShowRedeemModal] = useState(false);
+        const [sidebarOpen, setSidebarOpen] = useState(false);
         const [squadViewMode, setSquadViewMode] = useState('PITCH'); // 'PITCH' | 'TACTICS'
         const [pauseTacticsOpen, setPauseTacticsOpen] = useState(false);
 
@@ -5580,6 +6106,8 @@
           homeSquadOverride = null,
           homeFormationOverride = null,
           homeNameOverride = null,
+          homePlaystylesOverride = null,
+          awayPlaystyles = [],
           isMultiplayer = false,
           mpRole = null,
         }) => {
@@ -5597,9 +6125,11 @@
             awayName,
             homeSquad: homeSquadOverride || squadCards,
             homeFormation: homeFormationOverride || save.formation,
+            homePlaystyles: homePlaystylesOverride || save.activePlaystyles || [],
             awaySquad,
             awayFormation,
             awayTactics,
+            awayPlaystyles: awayPlaystyles || [],
             awayBoost,
             awayKit,
             seed: seed || Math.floor(Math.random() * 1000000),
@@ -5610,6 +6140,53 @@
             isMultiplayer,
             mpRole,
           });
+        };
+
+        const handleBuyPlaystyle = (ps) => {
+          if (!ps || save.coins < ps.costCoins || save.shards < ps.costShards) return;
+          audioFX.playClick();
+          setSave((prev) => {
+            const unlocked = new Set(prev.unlockedPlaystyles || []);
+            unlocked.add(ps.id);
+            const active = [...(prev.activePlaystyles || [])];
+            if (active.length < 4 && !active.includes(ps.id)) {
+              active.push(ps.id);
+            }
+            return {
+              ...prev,
+              coins: prev.coins - ps.costCoins,
+              shards: prev.shards - ps.costShards,
+              unlockedPlaystyles: Array.from(unlocked),
+              activePlaystyles: active,
+            };
+          });
+        };
+
+        const handleEquipPlaystyle = (id) => {
+          audioFX.playClick();
+          setSave((prev) => {
+            const active = [...(prev.activePlaystyles || [])];
+            if (active.length >= 4 || active.includes(id)) return prev;
+            return { ...prev, activePlaystyles: [...active, id] };
+          });
+        };
+
+        const handleUnequipPlaystyle = (id) => {
+          audioFX.playClick();
+          setSave((prev) => {
+            return {
+              ...prev,
+              activePlaystyles: (prev.activePlaystyles || []).filter((x) => x !== id),
+            };
+          });
+        };
+
+        const handleRedeemReward = (coins, shards) => {
+          setSave((prev) => ({
+            ...prev,
+            coins: prev.coins + coins,
+            shards: prev.shards + shards,
+          }));
         };
 
         const accountKey = currentUser ? currentUser.usernameKey : guestId;
@@ -6470,7 +7047,7 @@
                     <ArcadeCrestLogo size={68} />
                     <div>
                       <h1 className="font-arcade text-2xl sm:text-4xl text-white leading-tight crt-aberration">
-                        PIXEL KICK FC
+                        KICK DIH FC
                       </h1>
                       <div className="font-vt text-2xl text-emerald-400 tracking-wide mt-1">
                         16-BIT PACKS · 2D LIVE PITCH · FIREBASE PVP
@@ -6567,62 +7144,76 @@
         /* =======================================================================
            RENDER: MAIN GAME SHELL HUD + ACTIVE VIEWS
         ======================================================================= */
-        const TABS = [
-          { id: 'LOBBY', label: 'HUB' },
-          { id: 'PACKS', label: 'PACKS' },
-          { id: 'SQUAD', label: 'SQUAD' },
-          { id: 'MARKET', label: 'MARKET' },
-          { id: 'PLAY', label: 'MATCH' },
-          { id: 'SBC', label: 'SBC' },
-          { id: 'ALBUM', label: 'ALBUM' },
-          { id: 'LADDER', label: 'LADDER' },
+        const NAV_ITEMS = [
+          { id: 'LOBBY', label: 'HUB', icon: '⚡', desc: 'Command Clubhouse' },
+          { id: 'PLAYSTYLES', label: 'PLAYSTYLES', icon: '🔮', desc: '4-Tier Team Perks', badge: `${save.activePlaystyles?.length || 0}/4` },
+          { id: 'PLAY', label: 'MATCH ARENA', icon: '⚽', desc: 'Ranked, CPU & Synced PvP' },
+          { id: 'SQUAD', label: 'SQUAD & XI', icon: '👥', desc: 'Formation & Tactics' },
+          { id: 'PACKS', label: 'PACK STORE', icon: '🎴', desc: 'Tear Holographic Foil' },
+          { id: 'MARKET', label: 'SHARDS MARKET', icon: '💎', desc: 'Signings & Transfers' },
+          { id: 'SBC', label: 'SBC VAULT', icon: '🧩', desc: 'Squad Building Fodder' },
+          { id: 'ALBUM', label: 'COLLECTOR ALBUM', icon: '📖', desc: '550 Player Binder' },
+          { id: 'LADDER', label: 'RANKED LADDER', icon: '🏆', desc: 'Div 10 to Div 1 ELO' },
         ];
 
         return (
-          <div className="min-h-screen flex flex-col crt-edge-chroma">
+          <div className="min-h-screen flex flex-col crt-edge-chroma bg-slate-950 text-slate-100">
             {save.scanlines && <div className="crt-overlay" aria-hidden="true" />}
 
-            {/* Top Arcade Shell Header */}
-            <header className="sticky top-0 z-30 theme-header border-b-2 px-4 py-2.5">
-              <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-3">
-                {/* Brand + Club Summary */}
+            {/* Top Arcade Shell Header - Streamlined & Spacious */}
+            <header className="sticky top-0 z-30 theme-header border-b-2 px-3 sm:px-6 py-2.5">
+              <div className="max-w-7xl mx-auto flex items-center justify-between gap-3">
+                {/* Brand + Hamburger Toggle */}
                 <div className="flex items-center gap-3 shrink-0">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      audioFX.playClick();
+                      setSidebarOpen((p) => !p);
+                    }}
+                    className="p-2 bg-slate-800 hover:bg-slate-700 text-emerald-400 font-bold border border-slate-700 pixel-btn flex items-center justify-center shrink-0"
+                    aria-label="Toggle Navigation Sidebar"
+                    title="Toggle Navigation Sidebar"
+                  >
+                    <span className="font-arcade text-xs">☰</span>
+                  </button>
                   <ArcadeCrestLogo size={34} />
                   <div>
-                    <div className="font-arcade text-xs text-white whitespace-nowrap">
-                      {save.clubName}{' '}
+                    <div className="font-arcade text-xs text-white whitespace-nowrap flex items-center gap-2">
+                      <span>{save.clubName}</span>
                       <span className="text-[10px] text-emerald-400 font-sans font-bold">
                         {currentUser ? `@${currentUser.username}` : 'GUEST'}
                       </span>
                     </div>
                     <div className="font-vt text-base text-slate-400 tabular-nums leading-none mt-0.5 whitespace-nowrap">
-                      DIV {division} · {save.elo} ELO · {save.coins.toLocaleString()} COINS · {save.shards.toLocaleString()} SHARDS
+                      DIV {division} · {save.elo} ELO
                     </div>
                   </div>
                 </div>
 
-                {/* Navigation Tabs */}
-                <nav className="flex items-center gap-1.5 overflow-x-auto" aria-label="Game Navigation">
-                  {TABS.map((t) => (
-                    <button
-                      key={t.id}
-                      type="button"
-                      onClick={() => {
-                        audioFX.playClick();
-                        setActiveMatch(null);
-                        setPenaltyActive(false);
-                        setActiveTab(t.id);
-                      }}
-                      className={`px-2.5 py-1.5 text-xs font-bold whitespace-nowrap shrink-0 pixel-btn ${
-                        activeTab === t.id
-                          ? 'bg-emerald-500 text-slate-950'
-                          : 'bg-slate-800 text-slate-200 hover:bg-slate-700'
-                      }`}
-                    >
-                      {t.label}
-                    </button>
-                  ))}
-                </nav>
+                {/* Quick Currency Counters & Redeem Button */}
+                <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+                  <div className="px-2.5 sm:px-3 py-1.5 bg-slate-900 border border-amber-400/80 font-arcade text-[10px] sm:text-xs text-amber-300 tabular-nums flex items-center gap-1 shadow-sm">
+                    <span className="text-amber-400">🪙</span>
+                    <span>{save.coins.toLocaleString()}</span>
+                  </div>
+                  <div className="px-2.5 sm:px-3 py-1.5 bg-slate-900 border border-sky-400/80 font-arcade text-[10px] sm:text-xs text-sky-400 tabular-nums flex items-center gap-1 shadow-sm">
+                    <span className="text-sky-400">💎</span>
+                    <span>{save.shards.toLocaleString()}</span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      audioFX.playClick();
+                      setShowRedeemModal(true);
+                    }}
+                    className="px-3 py-1.5 bg-gradient-to-r from-amber-400 via-amber-300 to-amber-500 text-slate-950 font-arcade text-[10px] sm:text-xs pixel-btn whitespace-nowrap font-bold shadow-md hover:brightness-110 active:scale-95 flex items-center gap-1"
+                    title="Redeem code 126MDIH for +20,000 Coins & +10,000 Shards"
+                  >
+                    <span>🎁</span>
+                    <span className="hidden sm:inline">REDEEM</span>
+                  </button>
+                </div>
 
                 {/* Utility Controls */}
                 <div className="flex items-center gap-1.5 shrink-0">
@@ -6632,14 +7223,14 @@
                       audioFX.playClick();
                       setShowStyleModal(true);
                     }}
-                    className="px-2.5 py-1.5 text-[10px] bg-slate-800 text-sky-300 pixel-btn whitespace-nowrap"
+                    className="px-2 sm:px-2.5 py-1.5 text-[10px] bg-slate-800 text-sky-300 pixel-btn whitespace-nowrap"
                   >
                     STYLE
                   </button>
                   <button
                     type="button"
                     onClick={() => setSave((p) => ({ ...p, muted: !p.muted }))}
-                    className="px-2.5 py-1.5 text-[10px] bg-slate-800 text-slate-200 pixel-btn whitespace-nowrap"
+                    className="px-2 sm:px-2.5 py-1.5 text-[10px] bg-slate-800 text-slate-200 pixel-btn whitespace-nowrap"
                   >
                     {save.muted ? 'SFX OFF' : 'SFX ON'}
                   </button>
@@ -6649,7 +7240,7 @@
                       audioFX.playClick();
                       setShowAccountModal(true);
                     }}
-                    className={`px-2.5 py-1.5 text-[10px] pixel-btn whitespace-nowrap ${
+                    className={`px-2 sm:px-2.5 py-1.5 text-[10px] pixel-btn whitespace-nowrap ${
                       currentUser ? 'bg-amber-400 text-slate-950 font-bold' : 'bg-slate-800 text-sky-300'
                     }`}
                   >
@@ -6661,46 +7252,154 @@
                       audioFX.playClick();
                       setShowFbModal(true);
                     }}
-                    className={`px-2.5 py-1.5 text-[10px] pixel-btn whitespace-nowrap ${
+                    className={`px-2 sm:px-2.5 py-1.5 text-[10px] pixel-btn whitespace-nowrap ${
                       fbConnected ? 'bg-emerald-600 text-white' : 'bg-slate-800 text-amber-300'
                     }`}
                   >
-                    {fbConnected ? 'ONLINE' : 'OFFLINE AI'}
+                    {fbConnected ? 'ONLINE' : 'OFFLINE'}
                   </button>
                 </div>
               </div>
             </header>
 
-            {/* Main Viewport Content */}
-            <main className="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6">
-              {/* ACTIVE 2D MATCH VIEW */}
-              {activeMatch ? (
-                <div className="flex flex-col gap-4">
-                  <div className="flex items-center justify-between">
-                    <span className="font-arcade text-xs text-emerald-400">
-                      {activeMatch.mode} MATCHDAY
-                      {activeMatch.isMultiplayer ? ` · SYNCED ${activeMatch.mpRole} · ROOM ${activeMatch.roomCode}` : ''} ·{' '}
-                      {TACTIC_PRESETS[save.tactics?.mentality]?.label || 'Custom Tactics'}
-                    </span>
+            {/* Layout Body: Responsive Sidebar + Main Viewport */}
+            <div className="flex-1 flex max-w-7xl w-full mx-auto relative">
+              {/* Mobile Drawer Backdrop */}
+              {sidebarOpen && (
+                <div
+                  className="fixed inset-0 z-40 bg-black/75 lg:hidden"
+                  onClick={() => setSidebarOpen(false)}
+                  aria-hidden="true"
+                />
+              )}
+
+              {/* Sidebar Navigation */}
+              <aside
+                className={`fixed lg:sticky top-0 lg:top-[57px] left-0 z-40 h-full lg:h-[calc(100vh-57px)] w-64 bg-slate-950 border-r-2 border-slate-800 p-4 flex flex-col justify-between overflow-y-auto transition-transform duration-200 ease-in-out shrink-0 ${
+                  sidebarOpen ? 'translate-x-0 shadow-2xl' : '-translate-x-full lg:translate-x-0'
+                }`}
+              >
+                <div className="flex flex-col gap-3">
+                  <div className="flex items-center justify-between pb-3 border-b border-slate-800">
+                    <div className="flex items-center gap-2">
+                      <ArcadeCrestLogo size={28} />
+                      <div>
+                        <div className="font-arcade text-xs text-white">KICK DIH FC</div>
+                        <div className="font-vt text-sm text-emerald-400 leading-none">CLUBHOUSE</div>
+                      </div>
+                    </div>
                     <button
                       type="button"
-                      onClick={() => {
-                        audioFX.playClick();
-                        handleExitMatch();
-                      }}
-                      className="px-3 py-1.5 bg-slate-800 text-xs text-slate-200 pixel-btn"
+                      onClick={() => setSidebarOpen(false)}
+                      className="lg:hidden text-slate-400 hover:text-white p-1 font-bold text-sm"
+                      aria-label="Close sidebar"
                     >
-                      FORFEIT &amp; EXIT
+                      ✕
                     </button>
                   </div>
 
-                  <PitchCanvas
-                    homeName={activeMatch.homeName}
-                    awayName={activeMatch.awayName}
-                    homeSquad={activeMatch.homeSquad}
-                    awaySquad={activeMatch.awaySquad}
-                    homeFormation={activeMatch.homeFormation}
-                    awayFormation={activeMatch.awayFormation}
+                  <nav className="flex flex-col gap-1.5" aria-label="Sidebar Menu">
+                    {NAV_ITEMS.map((item) => {
+                      const isActive = activeTab === item.id && !activeMatch && !penaltyActive;
+                      return (
+                        <button
+                          key={item.id}
+                          type="button"
+                          onClick={() => {
+                            audioFX.playClick();
+                            setActiveMatch(null);
+                            setPenaltyActive(false);
+                            setActiveTab(item.id);
+                            setSidebarOpen(false);
+                          }}
+                          className={`flex items-center justify-between px-3 py-2.5 text-left text-xs font-bold transition-all pixel-btn ${
+                            isActive
+                              ? 'bg-emerald-500 text-slate-950 shadow-md'
+                              : 'bg-slate-900/90 hover:bg-slate-800 text-slate-200 hover:text-white'
+                          } border border-slate-800`}
+                        >
+                          <div className="flex items-center gap-2.5 min-w-0">
+                            <span className="text-sm shrink-0">{item.icon}</span>
+                            <span className="truncate">{item.label}</span>
+                          </div>
+                          {item.badge && (
+                            <span
+                              className={`text-[9px] px-1.5 py-0.5 font-sans font-extrabold ${
+                                isActive ? 'bg-slate-950 text-emerald-300' : 'bg-purple-950 text-purple-300 border border-purple-500/40'
+                              }`}
+                            >
+                              {item.badge}
+                            </span>
+                          )}
+                        </button>
+                      );
+                    })}
+                  </nav>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      audioFX.playClick();
+                      setShowRedeemModal(true);
+                      setSidebarOpen(false);
+                    }}
+                    className="mt-1 w-full flex items-center justify-center gap-2 px-3 py-2.5 bg-gradient-to-r from-amber-400/20 to-amber-500/20 border-2 border-amber-400 text-amber-300 font-arcade text-xs pixel-btn hover:bg-amber-400/30 transition-all"
+                  >
+                    <span>🎁</span>
+                    <span>ENTER CODE (126MDIH)</span>
+                  </button>
+                </div>
+
+                <div className="pt-4 border-t border-slate-800 flex flex-col gap-2">
+                  <div className="p-2.5 bg-slate-900 border border-slate-800 text-[11px]">
+                    <div className="flex justify-between text-slate-300">
+                      <span>Squad Rating</span>
+                      <span className="text-amber-300 font-bold">{chemReport.avgRating} OVR</span>
+                    </div>
+                    <div className="flex justify-between text-slate-300 mt-1">
+                      <span>Chemistry</span>
+                      <span className="text-emerald-400 font-bold">{chemReport.totalChem}/33</span>
+                    </div>
+                    <div className="flex justify-between text-slate-300 mt-1">
+                      <span>Playstyles</span>
+                      <span className="text-purple-400 font-bold">{save.activePlaystyles?.length || 0}/4 Slots</span>
+                    </div>
+                  </div>
+                </div>
+              </aside>
+
+              {/* Main Viewport Content */}
+              <main className="flex-1 min-w-0 p-4 sm:p-6 overflow-x-hidden">
+                {/* ACTIVE 2D MATCH VIEW */}
+                {activeMatch ? (
+                  <div className="flex flex-col gap-4">
+                    <div className="flex items-center justify-between">
+                      <span className="font-arcade text-xs text-emerald-400">
+                        {activeMatch.mode} MATCHDAY
+                        {activeMatch.isMultiplayer ? ` · SYNCED ${activeMatch.mpRole} · ROOM ${activeMatch.roomCode}` : ''} ·{' '}
+                        {TACTIC_PRESETS[save.tactics?.mentality]?.label || 'Custom Tactics'}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          audioFX.playClick();
+                          handleExitMatch();
+                        }}
+                        className="px-3 py-1.5 bg-slate-800 text-xs text-slate-200 pixel-btn"
+                      >
+                        FORFEIT &amp; EXIT
+                      </button>
+                    </div>
+
+                    <PitchCanvas
+                      homeName={activeMatch.homeName}
+                      awayName={activeMatch.awayName}
+                      homeSquad={activeMatch.homeSquad}
+                      awaySquad={activeMatch.awaySquad}
+                      homeFormation={activeMatch.homeFormation}
+                      awayFormation={activeMatch.awayFormation}
+                      homePlaystyles={activeMatch.homePlaystyles || save.activePlaystyles || []}
+                      awayPlaystyles={activeMatch.awayPlaystyles || []}
                     homeTactics={
                       activeMatch.isMultiplayer
                         ? activeMatch.mpRole === 'HOST'
@@ -6762,137 +7461,427 @@
                 />
               ) : (
                 <>
-                  {/* =================== 1. LOBBY HUB =================== */}
+                  {/* =================== 1. LOBBY HUB (ARCADE TILES) =================== */}
                   {activeTab === 'LOBBY' && (
                     <div className="flex flex-col gap-6">
-                      <div className="pixel-panel p-6 grid grid-cols-1 lg:grid-cols-12 gap-6 items-center">
-                        <div className="lg:col-span-8 flex flex-col gap-3">
-                          <div className="font-arcade text-lg sm:text-2xl text-white crt-aberration">
-                            CLUBHOUSE COMMAND
-                          </div>
-                          <p className="font-vt text-2xl text-slate-300 leading-snug">
-                            Starting XI Rated <span className="text-amber-300 font-bold">{chemReport.avgRating} OVR</span> with{' '}
-                            <span className="text-emerald-400 font-bold">{chemReport.totalChem}/33 Chemistry</span> in{' '}
-                            {save.formation}. Open packs, refine your chemistry, or hit the pitch.
-                          </p>
-                          <div className="flex flex-wrap gap-3 pt-2">
-                            <button
-                              type="button"
-                              onClick={() => {
-                                audioFX.playClick();
-                                setActiveTab('PLAY');
-                              }}
-                              className="px-5 py-3 bg-emerald-500 text-slate-950 font-arcade text-xs pixel-btn"
-                            >
-                              PLAY MATCH
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => {
-                                audioFX.playClick();
-                                setActiveTab('PACKS');
-                              }}
-                              className="px-5 py-3 bg-amber-400 text-slate-950 font-arcade text-xs pixel-btn"
-                            >
-                              OPEN PACKS
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => {
-                                audioFX.playClick();
-                                setActiveTab('SQUAD');
-                              }}
-                              className="px-5 py-3 bg-slate-800 text-white font-pixel text-xs pixel-btn"
-                            >
-                              MANAGE SQUAD
-                            </button>
-                          </div>
-                        </div>
-
-                        {/* Club Stats Snapshot */}
-                        <div className="lg:col-span-4 grid grid-cols-2 gap-3 tabular-nums">
-                          <div className="p-3 bg-slate-950 border border-slate-700">
-                            <div className="text-[10px] text-slate-400">DIVISION</div>
-                            <div className="font-arcade text-lg text-emerald-400 mt-1">DIV {division}</div>
-                          </div>
-                          <div className="p-3 bg-slate-950 border border-slate-700">
-                            <div className="text-[10px] text-slate-400">RANKED ELO</div>
-                            <div className="font-arcade text-lg text-amber-300 mt-1">{save.elo}</div>
-                          </div>
-                          <div className="p-3 bg-slate-950 border border-slate-700">
-                            <div className="text-[10px] text-slate-400">ALBUM</div>
-                            <div className="font-arcade text-lg text-sky-400 mt-1">
-                              {save.discoveredIds.length}/{PLAYER_POOL.length}
+                      {/* Clubhouse Hero Banner */}
+                      <div className="pixel-panel p-5 sm:p-6 bg-gradient-to-r from-slate-900 via-slate-900/90 to-slate-950 border-2 border-emerald-500/40">
+                        <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
+                          <div className="flex flex-col gap-2">
+                            <div className="flex items-center gap-2">
+                              <span className="font-arcade text-lg sm:text-2xl text-white crt-aberration">
+                                {save.clubName} COMMAND
+                              </span>
+                              <span className="px-2 py-0.5 bg-emerald-500/20 border border-emerald-400 text-emerald-300 font-arcade text-[10px]">
+                                DIV {division}
+                              </span>
                             </div>
+                            <p className="font-vt text-2xl text-slate-300 max-w-2xl leading-snug">
+                              Starting XI <span className="text-amber-300 font-bold">{chemReport.avgRating} OVR</span> · Chemistry{' '}
+                              <span className="text-emerald-400 font-bold">{chemReport.totalChem}/33</span> in {save.formation}.{' '}
+                              Tactics: <span className="text-sky-300">{TACTIC_PRESETS[save.tactics?.mentality]?.label || 'Balanced'}</span>.
+                            </p>
                           </div>
-                          <div className="p-3 bg-slate-950 border border-slate-700">
-                            <div className="text-[10px] text-slate-400">RECORD</div>
-                            <div className="font-arcade text-lg text-white mt-1">
-                              {save.wins}W-{save.losses}L
+
+                          {/* Active Playstyles Quick Preview */}
+                          <div className="flex flex-col gap-1.5 p-3 bg-slate-950/80 border border-purple-500/30 min-w-[240px]">
+                            <div className="flex items-center justify-between text-[10px] text-purple-300 font-bold">
+                              <span>EQUIPPED PLAYSTYLES</span>
+                              <span>{save.activePlaystyles?.length || 0}/4 ACTIVE</span>
+                            </div>
+                            <div className="flex flex-wrap gap-1 mt-0.5">
+                              {(save.activePlaystyles && save.activePlaystyles.length > 0) ? (
+                                save.activePlaystyles.map((psId) => {
+                                  const def = PLAYSTYLE_BY_ID[psId];
+                                  return (
+                                    <span
+                                      key={psId}
+                                      className="text-[9px] px-1.5 py-0.5 bg-purple-950/90 text-purple-200 border border-purple-500/50 truncate max-w-[150px]"
+                                      title={def ? def.desc : psId}
+                                    >
+                                      {def ? `${def.shortTag ? `[${def.shortTag}] ` : ''}${def.name}` : psId}
+                                    </span>
+                                  );
+                                })
+                              ) : (
+                                <span className="text-[10px] text-slate-500 italic">
+                                  No playstyles equipped yet (+4 slots)
+                                </span>
+                              )}
                             </div>
                           </div>
                         </div>
                       </div>
 
-                      {/* Quick Mode Showcase Grid */}
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <div className="pixel-panel p-4 flex flex-col justify-between gap-4">
-                          <div>
-                            <div className="font-arcade text-xs text-emerald-400">RANKED LADDER</div>
-                            <p className="font-vt text-xl text-slate-300 mt-2">
-                              Climb from Division 10 to Division 1. Win +25 ELO and earn 150 coins per match.
-                            </p>
-                          </div>
+                      {/* Interactive Arcade Navigation Tiles */}
+                      <div>
+                        <div className="flex items-center justify-between mb-3">
+                          <h2 className="font-arcade text-xs text-slate-300 tracking-wider">
+                            SELECT GAME MODE &amp; MANAGEMENT TILES
+                          </h2>
+                          <span className="font-vt text-lg text-emerald-400">
+                            CLICK TILE TO ENTER · LIVE TRANSITIONS
+                          </span>
+                        </div>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                          {/* HERO TILE 1: MATCHDAY ARENA */}
                           <button
                             type="button"
                             onClick={() => {
+                              audioFX.playClick();
                               setActiveTab('PLAY');
                             }}
-                            className="px-4 py-2 bg-slate-800 text-xs text-white pixel-btn self-start"
+                            className="group relative sm:col-span-2 p-5 bg-gradient-to-br from-emerald-950/70 via-slate-900 to-slate-950 border-2 border-emerald-500/60 hover:border-emerald-400 transition-all duration-200 transform hover:-translate-y-1 hover:shadow-xl active:translate-y-0 text-left flex flex-col justify-between gap-4 pixel-panel"
                           >
-                            ENTER LADDER
-                          </button>
-                        </div>
-
-                        <div className="pixel-panel p-4 flex flex-col justify-between gap-4">
-                          <div>
-                            <div className="font-arcade text-xs text-amber-300">RETRO DRAFT CUP</div>
-                            <p className="font-vt text-xl text-slate-300 mt-2">
-                              Pick a manager and draft 1-of-5 powerhouse cards across 5 rounds for a 4-stage cup.
+                            <div className="flex items-start justify-between gap-3">
+                              <div className="flex items-center gap-3">
+                                <div className="w-12 h-12 bg-emerald-500/20 border-2 border-emerald-400 flex items-center justify-center text-2xl group-hover:scale-110 transition-transform">
+                                  ⚽
+                                </div>
+                                <div>
+                                  <div className="font-arcade text-base text-white group-hover:text-emerald-300 transition-colors">
+                                    MATCHDAY ARENA
+                                  </div>
+                                  <div className="font-vt text-xl text-emerald-400">
+                                    RANKED LADDER · CPU RIVALS · SYNCED PVP
+                                  </div>
+                                </div>
+                              </div>
+                              <span className="font-arcade text-[10px] px-2 py-1 bg-emerald-500 text-slate-950 font-bold whitespace-nowrap">
+                                DIV {division}
+                              </span>
+                            </div>
+                            <p className="font-vt text-xl text-slate-300 leading-snug">
+                              Step onto the 2D pitch under floodlights. Outside-the-box screamers, aerial lobbed passes, and full-tactical timeouts await.
                             </p>
-                          </div>
+                            <div className="flex items-center justify-between pt-2 border-t border-emerald-900/40 text-xs font-bold text-emerald-400 group-hover:translate-x-1 transition-transform">
+                              <span>PLAY MATCH</span>
+                              <span>→</span>
+                            </div>
+                          </button>
+
+                          {/* HERO TILE 2: TEAM PLAYSTYLES ARMORY */}
                           <button
                             type="button"
                             onClick={() => {
-                              setActiveTab('PLAY');
-                              startNewDraft();
+                              audioFX.playClick();
+                              setActiveTab('PLAYSTYLES');
                             }}
-                            className="px-4 py-2 bg-slate-800 text-xs text-white pixel-btn self-start"
+                            className="group relative sm:col-span-1 p-5 bg-gradient-to-br from-purple-950/70 via-slate-900 to-slate-950 border-2 border-purple-500/60 hover:border-purple-400 transition-all duration-200 transform hover:-translate-y-1 hover:shadow-xl active:translate-y-0 text-left flex flex-col justify-between gap-4 pixel-panel"
                           >
-                            START DRAFT
-                          </button>
-                        </div>
-
-                        <div className="pixel-panel p-4 flex flex-col justify-between gap-4">
-                          <div>
-                            <div className="font-arcade text-xs text-sky-400">PENALTY SUDDEN DEATH</div>
-                            <p className="font-vt text-xl text-slate-300 mt-2">
-                              Read the striker&apos;s tell to make big saves and win 90-coin shootout bonuses.
+                            <div className="flex items-start justify-between gap-3">
+                              <div className="flex items-center gap-3">
+                                <div className="w-12 h-12 bg-purple-500/20 border-2 border-purple-400 flex items-center justify-center text-2xl group-hover:scale-110 transition-transform">
+                                  🔮
+                                </div>
+                                <div>
+                                  <div className="font-arcade text-sm text-white group-hover:text-purple-300 transition-colors">
+                                    PLAYSTYLES
+                                  </div>
+                                  <div className="font-vt text-lg text-purple-400">
+                                    4-TIER SQUAD BUFFS
+                                  </div>
+                                </div>
+                              </div>
+                              <span className="font-arcade text-[9px] px-2 py-0.5 bg-purple-900 text-purple-200 border border-purple-400">
+                                {save.activePlaystyles?.length || 0}/4 ACTIVE
+                              </span>
+                            </div>
+                            <p className="font-vt text-xl text-slate-300 leading-snug">
+                              Unlock Bronze, Silver, Gold &amp; Mythic Purple perks for shooting screamers, precision passes, and lockdown defending.
                             </p>
-                          </div>
+                            <div className="flex items-center justify-between pt-2 border-t border-purple-900/40 text-xs font-bold text-purple-400 group-hover:translate-x-1 transition-transform">
+                              <span>ARMORY VAULT</span>
+                              <span>→</span>
+                            </div>
+                          </button>
+
+                          {/* TILE 3: STARTING XI & SQUAD */}
+                          <button
+                            type="button"
+                            onClick={() => {
+                              audioFX.playClick();
+                              setActiveTab('SQUAD');
+                            }}
+                            className="group p-5 bg-slate-900/90 border-2 border-slate-800 hover:border-sky-400 transition-all duration-200 transform hover:-translate-y-1 hover:shadow-xl active:translate-y-0 text-left flex flex-col justify-between gap-3 pixel-panel"
+                          >
+                            <div className="flex items-center justify-between">
+                              <span className="text-2xl">👥</span>
+                              <span className="font-arcade text-[10px] text-amber-300">{chemReport.avgRating} OVR</span>
+                            </div>
+                            <div>
+                              <div className="font-arcade text-xs text-white group-hover:text-sky-300 transition-colors">
+                                SQUAD &amp; CHEMISTRY
+                              </div>
+                              <div className="font-vt text-lg text-emerald-400 mt-0.5">
+                                {chemReport.totalChem}/33 CHEMISTRY · {save.formation}
+                              </div>
+                              <p className="font-vt text-base text-slate-400 mt-1">
+                                Adjust formation, optimize nation/club chemistry, and configure team tactics.
+                              </p>
+                            </div>
+                            <div className="text-xs font-bold text-sky-400 flex items-center justify-between pt-2 border-t border-slate-800">
+                              <span>MANAGE XI</span>
+                              <span>→</span>
+                            </div>
+                          </button>
+
+                          {/* TILE 4: PACK STORE */}
+                          <button
+                            type="button"
+                            onClick={() => {
+                              audioFX.playClick();
+                              setActiveTab('PACKS');
+                            }}
+                            className="group p-5 bg-slate-900/90 border-2 border-slate-800 hover:border-amber-400 transition-all duration-200 transform hover:-translate-y-1 hover:shadow-xl active:translate-y-0 text-left flex flex-col justify-between gap-3 pixel-panel"
+                          >
+                            <div className="flex items-center justify-between">
+                              <span className="text-2xl">🎴</span>
+                              <span className="font-arcade text-[10px] text-amber-400">85+ WALKOUT</span>
+                            </div>
+                            <div>
+                              <div className="font-arcade text-xs text-white group-hover:text-amber-300 transition-colors">
+                                PACK STORE
+                              </div>
+                              <div className="font-vt text-lg text-amber-300 mt-0.5">
+                                TEAR HOLOGRAPHIC FOIL
+                              </div>
+                              <p className="font-vt text-base text-slate-400 mt-1">
+                                Open Bronze, Silver, Gold, TOTW &amp; Shapeshifter packs with stadium ceremonies.
+                              </p>
+                            </div>
+                            <div className="text-xs font-bold text-amber-400 flex items-center justify-between pt-2 border-t border-slate-800">
+                              <span>OPEN PACKS</span>
+                              <span>→</span>
+                            </div>
+                          </button>
+
+                          {/* TILE 5: SHARDS MARKET & SIGNINGS */}
+                          <button
+                            type="button"
+                            onClick={() => {
+                              audioFX.playClick();
+                              setActiveTab('MARKET');
+                            }}
+                            className="group p-5 bg-slate-900/90 border-2 border-slate-800 hover:border-cyan-400 transition-all duration-200 transform hover:-translate-y-1 hover:shadow-xl active:translate-y-0 text-left flex flex-col justify-between gap-3 pixel-panel"
+                          >
+                            <div className="flex items-center justify-between">
+                              <span className="text-2xl">💎</span>
+                              <span className="font-arcade text-[10px] text-cyan-400">{save.shards.toLocaleString()} SH</span>
+                            </div>
+                            <div>
+                              <div className="font-arcade text-xs text-white group-hover:text-cyan-300 transition-colors">
+                                SHARDS MARKET
+                              </div>
+                              <div className="font-vt text-lg text-cyan-400 mt-0.5">
+                                SIGNINGS &amp; TRANSFERS
+                              </div>
+                              <p className="font-vt text-base text-slate-400 mt-1">
+                                Spend Shards to buy target cards directly or trade players with online rivals.
+                              </p>
+                            </div>
+                            <div className="text-xs font-bold text-cyan-400 flex items-center justify-between pt-2 border-t border-slate-800">
+                              <span>BROWSE MARKET</span>
+                              <span>→</span>
+                            </div>
+                          </button>
+
+                          {/* TILE 6: REDEEM CODE VAULT */}
+                          <button
+                            type="button"
+                            onClick={() => {
+                              audioFX.playClick();
+                              setShowRedeemModal(true);
+                            }}
+                            className="group p-5 bg-gradient-to-br from-amber-950/40 via-slate-900 to-slate-950 border-2 border-amber-500/50 hover:border-amber-300 transition-all duration-200 transform hover:-translate-y-1 hover:shadow-xl active:translate-y-0 text-left flex flex-col justify-between gap-3 pixel-panel"
+                          >
+                            <div className="flex items-center justify-between">
+                              <span className="text-2xl">🎁</span>
+                              <span className="font-arcade text-[10px] px-1.5 py-0.5 bg-amber-400 text-slate-950 font-bold">126MDIH</span>
+                            </div>
+                            <div>
+                              <div className="font-arcade text-xs text-white group-hover:text-amber-300 transition-colors">
+                                REDEEM CODE VAULT
+                              </div>
+                              <div className="font-vt text-lg text-amber-300 mt-0.5">
+                                +20K COINS &amp; +10K SHARDS
+                              </div>
+                              <p className="font-vt text-base text-slate-400 mt-1">
+                                Redeem secret drops repeatedly to test squads, buy playstyles and tear packs.
+                              </p>
+                            </div>
+                            <div className="text-xs font-bold text-amber-400 flex items-center justify-between pt-2 border-t border-slate-800">
+                              <span>CLAIM REWARD</span>
+                              <span>→</span>
+                            </div>
+                          </button>
+
+                          {/* TILE 7: PENALTY SUDDEN DEATH */}
                           <button
                             type="button"
                             onClick={() => {
                               audioFX.playClick();
                               setPenaltyActive(true);
                             }}
-                            className="px-4 py-2 bg-slate-800 text-xs text-white pixel-btn self-start"
+                            className="group p-5 bg-slate-900/90 border-2 border-slate-800 hover:border-rose-400 transition-all duration-200 transform hover:-translate-y-1 hover:shadow-xl active:translate-y-0 text-left flex flex-col justify-between gap-3 pixel-panel"
                           >
-                            PLAY PENALTIES
+                            <div className="flex items-center justify-between">
+                              <span className="text-2xl">🎯</span>
+                              <span className="font-arcade text-[10px] text-rose-400">+90 COINS</span>
+                            </div>
+                            <div>
+                              <div className="font-arcade text-xs text-white group-hover:text-rose-300 transition-colors">
+                                PENALTY SHOOTOUT
+                              </div>
+                              <div className="font-vt text-lg text-rose-400 mt-0.5">
+                                SUDDEN DEATH 1-ON-1
+                              </div>
+                              <p className="font-vt text-base text-slate-400 mt-1">
+                                Read striker eye tells to pull off diving saves and win quick cash.
+                              </p>
+                            </div>
+                            <div className="text-xs font-bold text-rose-400 flex items-center justify-between pt-2 border-t border-slate-800">
+                              <span>SHOOTOUT</span>
+                              <span>→</span>
+                            </div>
+                          </button>
+
+                          {/* TILE 8: RETRO DRAFT CUP */}
+                          <button
+                            type="button"
+                            onClick={() => {
+                              audioFX.playClick();
+                              setActiveTab('PLAY');
+                              startNewDraft();
+                            }}
+                            className="group p-5 bg-slate-900/90 border-2 border-slate-800 hover:border-amber-400 transition-all duration-200 transform hover:-translate-y-1 hover:shadow-xl active:translate-y-0 text-left flex flex-col justify-between gap-3 pixel-panel"
+                          >
+                            <div className="flex items-center justify-between">
+                              <span className="text-2xl">🏆</span>
+                              <span className="font-arcade text-[10px] text-amber-400">4-STAGE CUP</span>
+                            </div>
+                            <div>
+                              <div className="font-arcade text-xs text-white group-hover:text-amber-300 transition-colors">
+                                RETRO DRAFT CUP
+                              </div>
+                              <div className="font-vt text-lg text-amber-300 mt-0.5">
+                                PICK 1-OF-5 SUPERSTARS
+                              </div>
+                              <p className="font-vt text-base text-slate-400 mt-1">
+                                Build an impromptu powerhouse and conquer 4 rounds for +600 coins.
+                              </p>
+                            </div>
+                            <div className="text-xs font-bold text-amber-400 flex items-center justify-between pt-2 border-t border-slate-800">
+                              <span>START DRAFT</span>
+                              <span>→</span>
+                            </div>
+                          </button>
+
+                          {/* TILE 9: SQUAD BUILDING CHALLENGES */}
+                          <button
+                            type="button"
+                            onClick={() => {
+                              audioFX.playClick();
+                              setActiveTab('SBC');
+                            }}
+                            className="group p-5 bg-slate-900/90 border-2 border-slate-800 hover:border-indigo-400 transition-all duration-200 transform hover:-translate-y-1 hover:shadow-xl active:translate-y-0 text-left flex flex-col justify-between gap-3 pixel-panel"
+                          >
+                            <div className="flex items-center justify-between">
+                              <span className="text-2xl">🧩</span>
+                              <span className="font-arcade text-[10px] text-indigo-400">EXCHANGE</span>
+                            </div>
+                            <div>
+                              <div className="font-arcade text-xs text-white group-hover:text-indigo-300 transition-colors">
+                                SBC VAULT
+                              </div>
+                              <div className="font-vt text-lg text-indigo-400 mt-0.5">
+                                SQUAD BUILDING CHALLENGES
+                              </div>
+                              <p className="font-vt text-base text-slate-400 mt-1">
+                                Trade duplicate card fodder to unlock untradeable Icons &amp; Shapeshifters.
+                              </p>
+                            </div>
+                            <div className="text-xs font-bold text-indigo-400 flex items-center justify-between pt-2 border-t border-slate-800">
+                              <span>SOLVE SBC</span>
+                              <span>→</span>
+                            </div>
+                          </button>
+
+                          {/* TILE 10: COLLECTOR ALBUM */}
+                          <button
+                            type="button"
+                            onClick={() => {
+                              audioFX.playClick();
+                              setActiveTab('ALBUM');
+                            }}
+                            className="group p-5 bg-slate-900/90 border-2 border-slate-800 hover:border-sky-400 transition-all duration-200 transform hover:-translate-y-1 hover:shadow-xl active:translate-y-0 text-left flex flex-col justify-between gap-3 pixel-panel"
+                          >
+                            <div className="flex items-center justify-between">
+                              <span className="text-2xl">📖</span>
+                              <span className="font-arcade text-[10px] text-sky-400">
+                                {save.discoveredIds.length}/550
+                              </span>
+                            </div>
+                            <div>
+                              <div className="font-arcade text-xs text-white group-hover:text-sky-300 transition-colors">
+                                CARD ALBUM
+                              </div>
+                              <div className="font-vt text-lg text-sky-400 mt-0.5">
+                                550 PLAYER BINDER
+                              </div>
+                              <p className="font-vt text-base text-slate-400 mt-1">
+                                Complete your collection across 7 tiers from Bronze to Mythic Icons.
+                              </p>
+                            </div>
+                            <div className="text-xs font-bold text-sky-400 flex items-center justify-between pt-2 border-t border-slate-800">
+                              <span>VIEW ALBUM</span>
+                              <span>→</span>
+                            </div>
+                          </button>
+
+                          {/* TILE 11: DIVISION LADDER */}
+                          <button
+                            type="button"
+                            onClick={() => {
+                              audioFX.playClick();
+                              setActiveTab('LADDER');
+                            }}
+                            className="group p-5 bg-slate-900/90 border-2 border-slate-800 hover:border-emerald-400 transition-all duration-200 transform hover:-translate-y-1 hover:shadow-xl active:translate-y-0 text-left flex flex-col justify-between gap-3 pixel-panel"
+                          >
+                            <div className="flex items-center justify-between">
+                              <span className="text-2xl">⚡</span>
+                              <span className="font-arcade text-[10px] text-emerald-400">{save.elo} ELO</span>
+                            </div>
+                            <div>
+                              <div className="font-arcade text-xs text-white group-hover:text-emerald-300 transition-colors">
+                                DIVISION LADDER
+                              </div>
+                              <div className="font-vt text-lg text-emerald-400 mt-0.5">
+                                DIV {division} LEADERBOARD
+                              </div>
+                              <p className="font-vt text-base text-slate-400 mt-1">
+                                Climb from Div 10 to Div 1 and see where your club ranks globally.
+                              </p>
+                            </div>
+                            <div className="text-xs font-bold text-emerald-400 flex items-center justify-between pt-2 border-t border-slate-800">
+                              <span>VIEW LADDER</span>
+                              <span>→</span>
+                            </div>
                           </button>
                         </div>
                       </div>
                     </div>
+                  )}
+
+                  {/* =================== 1.5 PLAYSTYLES ARMORY =================== */}
+                  {activeTab === 'PLAYSTYLES' && (
+                    <PlaystylesArmoryPanel
+                      save={save}
+                      onEquipPlaystyle={handleEquipPlaystyle}
+                      onUnequipPlaystyle={handleUnequipPlaystyle}
+                      onBuyPlaystyle={handleBuyPlaystyle}
+                    />
                   )}
 
                   {/* =================== 2. PACK STORE =================== */}
@@ -7869,6 +8858,7 @@
                 </>
               )}
             </main>
+          </div>
 
             {/* MODALS: WALKOUT, PAUSE, MATCH RESULT, ACCOUNT, FIREBASE */}
             {walkoutResult && (
@@ -7895,6 +8885,13 @@
                 scanlines={save.scanlines}
                 onUpdate={(patch) => setSave((p) => ({ ...p, ...patch }))}
                 onClose={() => setShowStyleModal(false)}
+              />
+            )}
+
+            {showRedeemModal && (
+              <RedeemCodeModal
+                onRedeem={handleRedeemReward}
+                onClose={() => setShowRedeemModal(false)}
               />
             )}
 

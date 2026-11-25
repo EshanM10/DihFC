@@ -483,5 +483,142 @@ test('high-OVR Icon/Elite XI decisively dominates low-OVR Bronze XI across 90-mi
   assert.ok(eliteGoalsTotal > bronzeGoalsTotal * 2.2, `Expected decisive goal margin, got ${eliteGoalsTotal}-${bronzeGoalsTotal}`);
 });
 
+test('14 team playstyles span Bronze, Silver, Gold & Purple and cost both Coins & Shards', async () => {
+  const { PLAYSTYLES, PLAYSTYLE_TIER_META } = await import('./engine');
+  assert.ok(PLAYSTYLES.length >= 12 && PLAYSTYLES.length <= 16, `Expected 12-16 playstyles, got ${PLAYSTYLES.length}`);
+  const tiers = new Set(PLAYSTYLES.map((p) => p.tier));
+  assert.ok(tiers.has('bronze') && tiers.has('silver') && tiers.has('gold') && tiers.has('purple'));
+  for (const ps of PLAYSTYLES) {
+    assert.ok(ps.costCoins > 0, `Playstyle ${ps.id} missing coin cost`);
+    assert.ok(ps.costShards > 0, `Playstyle ${ps.id} missing shard cost`);
+    assert.ok(PLAYSTYLE_TIER_META[ps.tier], `Missing tier meta for ${ps.tier}`);
+  }
+});
+
+test('redeem code 126MDIH grants 20,000 coins and 10,000 shards every single time', async () => {
+  const { redeemCodeReward } = await import('./engine');
+  const first = redeemCodeReward('126MDIH');
+  const second = redeemCodeReward('  126mdih  ');
+  const bad = redeemCodeReward('INVALID_CODE');
+  assert.equal(first.valid, true);
+  assert.equal(first.coins, 20000);
+  assert.equal(first.shards, 10000);
+  assert.equal(second.valid, true);
+  assert.equal(second.coins, 20000);
+  assert.equal(second.shards, 10000);
+  assert.equal(bad.valid, false);
+});
+
+test('halftime resets to center kickoff and goal kicks clear attackers outside the box', async () => {
+  const { resetKickoff } = await import('./engine');
+  const dots: PitchDot[] = [
+    {
+      id: 'h-gk', team: 'home', slotIndex: 0, shirtNum: 1, name: 'Home GK', role: 'GK',
+      x: 56, y: 380, vx: 0, vy: 0, homeX: 56, homeY: 380, kickoffX: 56, kickoffY: 380,
+      pac: 60, sho: 40, pas: 75, dri: 60, def: 82, redCarded: false, yellowCards: 0, diveTimer: 0, diveVy: 0,
+    },
+    {
+      id: 'h-st', team: 'home', slotIndex: 9, shirtNum: 9, name: 'Home ST', role: 'FWD',
+      x: 800, y: 200, vx: 0, vy: 0, homeX: 800, homeY: 380, kickoffX: 590, kickoffY: 380,
+      pac: 85, sho: 85, pas: 75, dri: 82, def: 40, redCarded: false, yellowCards: 0, diveTimer: 0, diveVy: 0,
+    },
+    {
+      id: 'a-st', team: 'away', slotIndex: 9, shirtNum: 9, name: 'Box Camper ST', role: 'FWD',
+      x: 95, y: 380, vx: 0, vy: 0, homeX: 500, homeY: 380, kickoffX: 680, kickoffY: 380,
+      pac: 88, sho: 86, pas: 72, dri: 82, def: 40, redCarded: false, yellowCards: 0, diveTimer: 0, diveVy: 0,
+    },
+  ];
+  const gkState: SimMatchState = {
+    pitchW: 1280, pitchH: 760, dots: JSON.parse(JSON.stringify(dots)),
+    ball: { x: 30, y: 120, z: 0, vx: -120, vy: 0, vz: 0, ownerId: null, lastTouchTeam: 'away', kickCooldown: 0 },
+    homeScore: 0, awayScore: 0, homeShots: 0, awayShots: 0,
+    homePossessionTicks: 0, awayPossessionTicks: 0, elapsedMinutes: 20,
+    freezeTicks: 0, goalBannerTimer: 0, lastEvent: null,
+  };
+  const evGk = stepMatchPhysics(gkState, 1 / 60, createSeededRng(7));
+  assert.ok(evGk.includes('GOALKICK_HOME'));
+  const camper = gkState.dots.find((d) => d.id === 'a-st')!;
+  assert.ok(camper.x > 220, `Expected opposing striker pushed outside box (>220), got ${camper.x}`);
+
+  const htState: SimMatchState = {
+    pitchW: 1280, pitchH: 760, dots: JSON.parse(JSON.stringify(dots)),
+    ball: { x: 1050, y: 180, z: 0, vx: 0, vy: 0, vz: 0, ownerId: 'h-st', lastTouchTeam: 'home', kickCooldown: 0 },
+    homeScore: 1, awayScore: 0, homeShots: 4, awayShots: 2,
+    homePossessionTicks: 50, awayPossessionTicks: 50, elapsedMinutes: 44.99,
+    freezeTicks: 0, goalBannerTimer: 0, lastEvent: null,
+  };
+  const evHt = stepMatchPhysics(htState, 1 / 30, createSeededRng(8));
+  assert.ok(evHt.includes('HALFTIME'));
+  assert.equal(htState.halfTimeDone, true);
+  assert.equal(htState.ball.x, 640);
+  assert.equal(htState.ball.y, 380);
+  resetKickoff(htState, 'away');
+  assert.equal(htState.ball.lastTouchTeam, 'away');
+});
+
+test('equipped Gold & Purple playstyles drive lobbed passes, long shots & huge match advantage', async () => {
+  const { readFileSync } = await import('node:fs');
+  const { resolve } = await import('node:path');
+  const { resetKickoff, TACTIC_PRESETS, getPlayerTraits } = await import('./engine');
+  const players: PlayerCard[] = JSON.parse(readFileSync(resolve(process.cwd(), 'public/players.json'), 'utf8'));
+  const gks = players.filter((p) => p.pos === 'GK' && p.tier === 'gold');
+  const out = players.filter((p) => p.pos !== 'GK' && p.tier === 'gold');
+
+  const toDots = (team: 'home' | 'away'): PitchDot[] => {
+    const slots = FORMATIONS['4-3-3'];
+    return slots.map((s, idx) => {
+      const card = idx === 0 ? gks[idx % gks.length] : out[idx % out.length];
+      const hx = team === 'home' ? 56 + s.x * 1168 : 1280 - (56 + s.x * 1168);
+      const hy = 48 + (team === 'home' ? s.y : 1 - s.y) * 664;
+      const kx = team === 'home'
+        ? (s.role === 'GK' ? 56 : Math.min(612, 60 + s.x * 560))
+        : (s.role === 'GK' ? 1224 : Math.max(668, 1220 - s.x * 560));
+      return {
+        id: `${team[0]}-${idx}`,
+        team, slotIndex: idx, shirtNum: card.shirtNum || idx + 1, name: card.name,
+        pos: s.pos, role: s.role, traits: getPlayerTraits(card),
+        x: kx, y: hy, vx: 0, vy: 0, homeX: hx, homeY: hy, kickoffX: kx, kickoffY: hy,
+        ovr: card.ovr, pac: card.stats.pac, sho: card.stats.sho, fin: card.stats.fin ?? card.stats.sho,
+        pas: card.stats.pas, vis: card.stats.vis ?? card.stats.pas, dri: card.stats.dri,
+        def: card.stats.def, phy: card.stats.phy,
+        redCarded: false, yellowCards: 0, diveTimer: 0, diveVy: 0,
+      };
+    });
+  };
+
+  let boostedGoals = 0;
+  let plainGoals = 0;
+  let totalLobs = 0;
+  let totalLongShots = 0;
+
+  for (const seed of [11, 22, 33, 44, 55, 66]) {
+    const state: SimMatchState = {
+      pitchW: 1280, pitchH: 760,
+      dots: [...toDots('home'), ...toDots('away')],
+      ball: { x: 640, y: 380, z: 0, vx: 0, vy: 0, vz: 0, ownerId: null, lastTouchTeam: 'home', kickCooldown: 0 },
+      homeScore: 0, awayScore: 0, homeShots: 0, awayShots: 0,
+      homePossessionTicks: 0, awayPossessionTicks: 0, elapsedMinutes: 0,
+      freezeTicks: 0, goalBannerTimer: 0, lastEvent: null,
+      homeTactics: TACTIC_PRESETS.BALANCED.tactics,
+      awayTactics: TACTIC_PRESETS.BALANCED.tactics,
+      homePlaystyles: ['ps_deadeye_screamer', 'ps_total_football', 'ps_lob_master'],
+      awayPlaystyles: [],
+    };
+    resetKickoff(state, 'home');
+    const rng = createSeededRng(seed);
+    for (let i = 0; i < 60 * 50; i++) {
+      stepMatchPhysics(state, 1 / 60, rng);
+    }
+    boostedGoals += state.homeScore;
+    plainGoals += state.awayScore;
+    totalLobs += state.homeLobs || 0;
+    totalLongShots += state.homeLongShots || 0;
+  }
+
+  assert.ok(boostedGoals > plainGoals, `Expected Playstyle XI (${boostedGoals}) to outscore identical No-Playstyle XI (${plainGoals})`);
+  assert.ok(totalLobs >= 10, `Expected lobbed passes with Lob Master, got ${totalLobs}`);
+  assert.ok(totalLongShots >= 6, `Expected outside-the-box long shots, got ${totalLongShots}`);
+});
+
 
 
