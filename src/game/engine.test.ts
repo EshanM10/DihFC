@@ -260,3 +260,109 @@ test('full 2D match simulation produces realistic football scorelines without ki
   assert.ok(totalGoals <= 9, `Expected realistic football total goals <= 9, got ${state.homeScore}-${state.awayScore}`);
 });
 
+test('getCardShardValue scales cleanly by OVR & tier with sell < buy', async () => {
+  const { getCardShardValue } = await import('./engine');
+  const bronze = getCardShardValue(SAMPLE_POOL[0]);
+  const gold = getCardShardValue(SAMPLE_POOL[2]);
+  const icon = getCardShardValue(SAMPLE_POOL[6]);
+  assert.ok(bronze.sellValue < bronze.buyPrice);
+  assert.ok(bronze.buyPrice < gold.buyPrice);
+  assert.ok(gold.buyPrice < icon.buyPrice);
+  assert.ok(icon.buyPrice >= 1500);
+});
+
+test('getPlayerTraits derives position-appropriate traits', async () => {
+  const { getPlayerTraits } = await import('./engine');
+  const winger: PlayerCard = {
+    id: 'w1', name: 'Winger', ovr: 82, tier: 'gold', pos: 'LW', nation: 'ENG', club: 'FC', league: 'EPL',
+    stats: { pac: 89, sho: 76, pas: 78, dri: 85, def: 40, phy: 66 }, shirtNum: 11,
+  };
+  const traits = getPlayerTraits(winger);
+  assert.ok(traits.includes('Speed Dribbler'));
+  assert.ok(traits.includes('Whipped Crosser'));
+});
+
+test('tactics meaningfully drive pass volume and crossing frequency', async () => {
+  const { readFileSync } = await import('node:fs');
+  const { resolve } = await import('node:path');
+  const { resetKickoff, TACTIC_PRESETS, getPlayerTraits } = await import('./engine');
+  const players: PlayerCard[] = JSON.parse(readFileSync(resolve(process.cwd(), 'public/players.json'), 'utf8'));
+  const gks = players.filter((p) => p.pos === 'GK');
+  const out = players.filter((p) => p.pos !== 'GK');
+
+  const runSim = (homeTactics: any) => {
+    const makeDots = (team: 'home' | 'away', offset: number): PitchDot[] => {
+      const slots = FORMATIONS['4-3-3'];
+      return slots.map((s, idx) => {
+        const card = idx === 0 ? gks[(offset + idx) % gks.length] : out[(offset + idx) % out.length];
+        const hx = team === 'home' ? 56 + s.x * 1168 : 1280 - (56 + s.x * 1168);
+        const hy = 48 + (team === 'home' ? s.y : 1 - s.y) * 664;
+        const kx = team === 'home'
+          ? (s.role === 'GK' ? 56 : Math.min(612, 60 + s.x * 560))
+          : (s.role === 'GK' ? 1224 : Math.max(668, 1220 - s.x * 560));
+        return {
+          id: `${team[0]}-${idx}`,
+          team,
+          slotIndex: idx,
+          shirtNum: card.shirtNum || idx + 1,
+          name: card.name,
+          pos: s.pos,
+          role: s.role,
+          traits: getPlayerTraits(card),
+          x: kx,
+          y: hy,
+          vx: 0,
+          vy: 0,
+          homeX: hx,
+          homeY: hy,
+          kickoffX: kx,
+          kickoffY: hy,
+          pac: card.stats.pac,
+          sho: card.stats.sho,
+          pas: card.stats.pas,
+          dri: card.stats.dri,
+          def: card.stats.def,
+          redCarded: false,
+          yellowCards: 0,
+          diveTimer: 0,
+          diveVy: 0,
+        };
+      });
+    };
+    const state: SimMatchState = {
+      pitchW: 1280,
+      pitchH: 760,
+      dots: [...makeDots('home', 12), ...makeDots('away', 44)],
+      ball: { x: 640, y: 380, z: 0, vx: 0, vy: 0, vz: 0, ownerId: null, lastTouchTeam: 'home', kickCooldown: 0 },
+      homeScore: 0,
+      awayScore: 0,
+      homeShots: 0,
+      awayShots: 0,
+      homePossessionTicks: 0,
+      awayPossessionTicks: 0,
+      elapsedMinutes: 0,
+      freezeTicks: 0,
+      goalBannerTimer: 0,
+      lastEvent: null,
+      homeTactics,
+      awayTactics: TACTIC_PRESETS.BALANCED.tactics,
+    };
+    resetKickoff(state, 'home');
+    const rng = createSeededRng(4242);
+    for (let i = 0; i < 60 * 50; i++) {
+      stepMatchPhysics(state, 1 / 60, rng);
+    }
+    return state;
+  };
+
+  const tikiState = runSim(TACTIC_PRESETS.TIKI_TAKA.tactics);
+  const wingState = runSim(TACTIC_PRESETS.WING_PLAY.tactics);
+  const busState = runSim(TACTIC_PRESETS.PARK_THE_BUS.tactics);
+
+  assert.ok((tikiState.homePasses || 0) > (busState.homePasses || 0),
+    `Expected Tiki-Taka passes (${tikiState.homePasses}) > Park the Bus (${busState.homePasses})`);
+  assert.ok((wingState.homeCrosses || 0) >= 1, `Expected Wing Play to produce crosses, got ${wingState.homeCrosses}`);
+  assert.ok((tikiState.homePasses || 0) < 160, `Expected pass count to stay realistic (<160), got ${tikiState.homePasses}`);
+});
+
+
