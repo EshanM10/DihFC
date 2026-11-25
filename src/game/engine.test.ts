@@ -77,15 +77,17 @@ test('ELO calculation & Division ladder mapping work accurately', () => {
   const win = calculateEloResult(3, 1, 1000);
   assert.equal(win.eloDelta, 25);
   assert.equal(win.newElo, 1025);
+  assert.equal(win.coinsEarned, 150);
   assert.equal(getDivisionFromElo(1025), 8);
   assert.equal(getDivisionFromElo(1950), 1);
 
   const loss = calculateEloResult(0, 2, 1000);
   assert.equal(loss.eloDelta, -15);
   assert.equal(loss.newElo, 985);
+  assert.equal(loss.coinsEarned, 25);
 });
 
-test('seeded pack roll is deterministic and triggers walkout on 86+/special', () => {
+test('seeded pack roll is deterministic and triggers walkout on 85+/special', () => {
   const rng1 = createSeededRng(4242);
   const rng2 = createSeededRng(4242);
   const roll1 = rollPackCards('icon', SAMPLE_POOL, rng1);
@@ -131,7 +133,38 @@ test('2D match physics steps deterministically and scores goals', () => {
   assert.equal(state.ball.x, 480);
 });
 
-test('public/players.json contains 550 unique cards across all 8 tiers', async () => {
+test('swept GK collision prevents high-speed shot from tunneling past keeper', () => {
+  const dots: PitchDot[] = [
+    {
+      id: 'a-gk', team: 'away', slotIndex: 0, shirtNum: 1, name: 'Keeper',
+      role: 'GK', x: 1220, y: 380, vx: 0, vy: 0, homeX: 1220, homeY: 380,
+      pac: 75, sho: 40, pas: 75, dri: 70, def: 88, redCarded: false, yellowCards: 0, diveTimer: 0, diveVy: 0,
+    },
+  ];
+  const state: SimMatchState = {
+    pitchW: 1280,
+    pitchH: 760,
+    dots,
+    ball: { x: 1190, y: 380, z: 12, vx: 1800, vy: 0, vz: 0, ownerId: null, lastTouchTeam: 'home', kickCooldown: 0 },
+    homeScore: 0,
+    awayScore: 0,
+    homeShots: 1,
+    awayShots: 0,
+    homePossessionTicks: 0,
+    awayPossessionTicks: 0,
+    elapsedMinutes: 10,
+    freezeTicks: 0,
+    goalBannerTimer: 0,
+    lastEvent: null,
+    shotInFlight: { team: 'home', shooterName: 'Striker' },
+  };
+  const rng = createSeededRng(101);
+  const ev = stepMatchPhysics(state, 1 / 30, rng);
+  assert.equal(state.homeScore, 0);
+  assert.ok(ev.includes('SAVE_AWAY'));
+});
+
+test('public/players.json has 550 rebalanced cards with 70s/80s golds & super-rare 90+ pulls', async () => {
   const { readFileSync } = await import('node:fs');
   const { resolve } = await import('node:path');
   const raw = readFileSync(resolve(process.cwd(), 'public/players.json'), 'utf8');
@@ -139,10 +172,91 @@ test('public/players.json contains 550 unique cards across all 8 tiers', async (
   assert.equal(players.length, 550);
   const ids = new Set(players.map((p) => p.id));
   assert.equal(ids.size, 550);
-  const tiers = new Set(players.map((p) => p.tier));
-  for (const tier of ['bronze', 'silver', 'gold', 'elite', 'totw', 'hero', 'icon', 'shapeshifter'] as const) {
-    assert.ok(tiers.has(tier), `Missing tier ${tier}`);
+
+  const golds = players.filter((p) => p.tier === 'gold');
+  assert.ok(golds.some((p) => p.ovr >= 74 && p.ovr <= 79), 'Expected 70s gold cards');
+  assert.ok(golds.some((p) => p.ovr >= 80 && p.ovr <= 83), 'Expected 80s gold cards');
+  assert.ok(players.filter((p) => p.ovr >= 90).length <= 50, '90+ cards should be scarce in pool');
+
+  // Verify 2,000 Premium Gold Pack rolls produce extremely few 90+ cards
+  const rng = createSeededRng(2026);
+  let totalCards = 0;
+  let ninetyPlus = 0;
+  for (let i = 0; i < 2000; i++) {
+    const res = rollPackCards('gold', players, rng);
+    for (const c of res.cards) {
+      totalCards += 1;
+      if (c.ovr >= 90) ninetyPlus += 1;
+    }
   }
-  assert.ok(players.some((p) => p.tier === 'shapeshifter' && /van dijk/i.test(p.name)));
+  assert.ok(ninetyPlus / totalCards < 0.005, `90+ pull rate too high: ${ninetyPlus}/${totalCards}`);
+});
+
+test('full 2D match simulation produces realistic football scorelines without kickoff loops', async () => {
+  const { readFileSync } = await import('node:fs');
+  const { resolve } = await import('node:path');
+  const { resetKickoff } = await import('./engine');
+  const players: PlayerCard[] = JSON.parse(readFileSync(resolve(process.cwd(), 'public/players.json'), 'utf8'));
+  const gks = players.filter((p) => p.pos === 'GK');
+  const out = players.filter((p) => p.pos !== 'GK');
+  const makeDots = (team: 'home' | 'away', offset: number): PitchDot[] => {
+    const slots = FORMATIONS['4-3-3'];
+    return slots.map((s, idx) => {
+      const card = idx === 0 ? gks[(offset + idx) % gks.length] : out[(offset + idx) % out.length];
+      const hx = team === 'home' ? 56 + s.x * 1168 : 1280 - (56 + s.x * 1168);
+      const hy = 48 + (team === 'home' ? s.y : 1 - s.y) * 664;
+      const kx = team === 'home'
+        ? (s.role === 'GK' ? 56 : Math.min(612, 60 + s.x * 560))
+        : (s.role === 'GK' ? 1224 : Math.max(668, 1220 - s.x * 560));
+      return {
+        id: `${team[0]}-${idx}`,
+        team,
+        slotIndex: idx,
+        shirtNum: card.shirtNum || idx + 1,
+        name: card.name,
+        role: s.role,
+        x: kx,
+        y: hy,
+        vx: 0,
+        vy: 0,
+        homeX: hx,
+        homeY: hy,
+        kickoffX: kx,
+        kickoffY: hy,
+        pac: card.stats.pac,
+        sho: card.stats.sho,
+        pas: card.stats.pas,
+        dri: card.stats.dri,
+        def: card.stats.def,
+        redCarded: false,
+        yellowCards: 0,
+        diveTimer: 0,
+        diveVy: 0,
+      };
+    });
+  };
+  const state: SimMatchState = {
+    pitchW: 1280,
+    pitchH: 760,
+    dots: [...makeDots('home', 10), ...makeDots('away', 40)],
+    ball: { x: 640, y: 380, z: 0, vx: 0, vy: 0, vz: 0, ownerId: null, lastTouchTeam: 'home', kickCooldown: 0 },
+    homeScore: 0,
+    awayScore: 0,
+    homeShots: 0,
+    awayShots: 0,
+    homePossessionTicks: 0,
+    awayPossessionTicks: 0,
+    elapsedMinutes: 0,
+    freezeTicks: 0,
+    goalBannerTimer: 0,
+    lastEvent: null,
+  };
+  resetKickoff(state, 'home');
+  const rng = createSeededRng(909);
+  for (let i = 0; i < 60 * 50; i++) {
+    stepMatchPhysics(state, 1 / 60, rng);
+  }
+  const totalGoals = state.homeScore + state.awayScore;
+  assert.ok(totalGoals <= 9, `Expected realistic football total goals <= 9, got ${state.homeScore}-${state.awayScore}`);
 });
 
